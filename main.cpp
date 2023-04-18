@@ -1,6 +1,5 @@
-#include <iostream>
+#include "design_princples/liskovSubstitutionPrinciple.h"
 
 int main() {
-    std::cout << "Hello, World!" << std::endl;
-    return 0;
+    LSPTest::run();
 }
