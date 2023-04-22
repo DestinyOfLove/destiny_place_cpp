@@ -79,8 +79,8 @@ private:
 
 int main()
 {
-    const int ROWS = 10000;
-    const int COLS = 10000;
+    const int ROWS = 50000;
+    const int COLS = 50000;
 
     std::cout << "Testing 2D array with " << ROWS << " rows and " << COLS << " cols." << std::endl;
 
@@ -92,10 +92,15 @@ int main()
     double elapsed_time_row_first_write = performance.WriteRowFirst();
     double elapsed_time_col_first_write = performance.WriteColFirst();
 
+    double ratio_read = elapsed_time_col_first_read / elapsed_time_row_first_read;
+    double ratio_write = elapsed_time_col_first_write / elapsed_time_row_first_write;
+
     std::cout << "Elapsed time for reading using row first: " << elapsed_time_row_first_read << "ms" << std::endl;
     std::cout << "Elapsed time for reading using col first: " << elapsed_time_col_first_read << "ms" << std::endl;
     std::cout << "Elapsed time for writing using row first: " << elapsed_time_row_first_write << "ms" << std::endl;
     std::cout << "Elapsed time for writing using col first: " << elapsed_time_col_first_write << "ms" << std::endl;
+    std::cout << "Ratio of elapsed time for reading: " << ratio_read << std::endl;
+    std::cout << "Ratio of elapsed time for writing: " << ratio_write << std::endl;
 
     return 0;
 }
