@@ -26,6 +26,7 @@ public:
                     int path_sum = current_path_sum + num * num;
                     if (path_sum == n) {
                         // 找到 n
+                        /* BFS的特点是逐层搜索，首先搜索距离起点最近的节点，然后才是更远的节点。因此，当我们在BFS中第一次找到一个结果时（即path_sum == n），这个结果所对应的路径长度path_len一定是最短的路径。 */
                         return path_len;
                     }
                     if (path_sum > n) {
