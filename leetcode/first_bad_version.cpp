@@ -8,12 +8,16 @@ bool isBadVersion(int version) {
 class Solution {
 public:
     int firstBadVersion(int n) {
+        /*
+         * 1. [g, g, g, b, b, b]
+         * 2. 找下界；
+         */
         int left = 1;
         int right = n;
-        while (left < right) {
+        while (left <= right) {
             int mid = left + (right - left) / 2;
             if (isBadVersion(mid)) {
-                right = mid;
+                right = mid - 1;
             } else {
                 left = mid + 1;
             }
