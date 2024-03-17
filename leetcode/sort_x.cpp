@@ -5,16 +5,19 @@ using namespace std;
 int mySqrt(int x) {
     if (x == 0) return 0;
 
+    /* 寻找 sq <= x 的上界 */
+    /*
+     * 1. 相当于寻找 sq > x 的下界 - 1，条件改为 sq > x;
+     * 3. 返回right;
+     */
     int left = 1, right = x;
     while (left <= right) {
         long long mid = left + (right - left) / 2; // 使用 long long 防止溢出
         long long sq = mid * mid;
-        if (sq == x) {
-            return mid;
-        } else if (sq < x) {
-            left = mid + 1;
-        } else {
+        if (sq > x) {
             right = mid - 1;
+        } else {
+            left = mid + 1;
         }
     }
     return right; // 当 left > right 时，right 是最后一个满足 sq <= x 的数
