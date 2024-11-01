@@ -1,0 +1,8 @@
+.vscode
+.history
+.idea
+
+build
+
+check_path.dSYM
+cmake-build-debug
