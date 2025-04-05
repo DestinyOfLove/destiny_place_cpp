@@ -1,19 +1,29 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.10)
 project(destiny_place_cpp)
-
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 11)
 
 # 递归查找所有 .cpp 文件
 file(GLOB_RECURSE ALL_CPP_FILES *.cpp)
 
-foreach (cpp_file ${ALL_CPP_FILES})
-    # 获取文件名（不带扩展名）和相对路径
-    get_filename_component(cpp_file_name ${cpp_file} NAME_WE)
-    get_filename_component(cpp_file_path ${cpp_file} PATH)
+# 包含头文件目录
+include_directories(
+    ${CMAKE_SOURCE_DIR}/algorithm
+    ${CMAKE_SOURCE_DIR}/cache
+    ${CMAKE_SOURCE_DIR}/design_princples
+    ${CMAKE_SOURCE_DIR}/leetcode
+    ${CMAKE_SOURCE_DIR}/some_knowledge
+)
 
-    # 将路径中的斜杠替换为下划线，以避免目标名称中的非法字符
-    string(REPLACE "/" "_" target_name ${cpp_file_path}_${cpp_file_name})
+set(MAIN_CONTAINING_FILES "")
+foreach(CPP_FILE ${ALL_CPP_FILES})
+    file(READ ${CPP_FILE} FILE_CONTENTS)
+    string(FIND "${FILE_CONTENTS}" "int main(" MAIN_FOUND)
+    if(NOT ${MAIN_FOUND} EQUAL -1)
+        list(APPEND MAIN_CONTAINING_FILES ${CPP_FILE})
+    endif()
+endforeach()
 
-    # 创建可执行文件
-    add_executable(${target_name} ${cpp_file})
-endforeach ()
+foreach(CPP_FILE ${MAIN_CONTAINING_FILES})
+    get_filename_component(EXECUTABLE_NAME ${CPP_FILE} NAME_WE)
+    add_executable(${EXECUTABLE_NAME} ${CPP_FILE})
+endforeach()

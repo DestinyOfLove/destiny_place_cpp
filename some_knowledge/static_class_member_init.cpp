@@ -38,7 +38,7 @@ class MyClass {
 public:
     static constexpr int myConstExprVar = 20;  // 也可以在类内部初始化
     static constexpr double myConstExprVar2 = 20;
-    static constexpr Tmp myConstExprVar3;
+    static constexpr Tmp myConstExprVar3{};
 };
 
 int main() {

@@ -31,7 +31,7 @@ int main() {
     float floatValue = 3.14;
 
     processValue(intValue);   // 正常调用
-    processValue(floatValue); // 静态断言失败，编译时会产生除以零错误
+    // processValue(floatValue); // 静态断言失败，编译时会产生除以零错误
 
     return 0;
 }
