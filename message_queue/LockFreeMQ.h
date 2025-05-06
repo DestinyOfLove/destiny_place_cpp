@@ -19,12 +19,15 @@ public:
     LockFreeMQ();
     ~LockFreeMQ();
 
-    void push(const T& data);
+    bool push(const T& data);
     T* pop();
+    void close();
+    bool is_close() const;
 
 private:
     std::atomic<MQNode<T>*> head_;
     std::atomic<MQNode<T>*> tail_;
+    std::atomic<bool> is_closed_;
 };
 
 template <typename T>
@@ -32,6 +35,7 @@ LockFreeMQ<T>::LockFreeMQ() {
     MQNode<T>* dummy = new MQNode<T>();
     head_.store(dummy);
     tail_.store(dummy);
+    is_closed_.store(false, std::memory_order_relaxed);
 }
 
 template <typename T>
@@ -44,7 +48,10 @@ LockFreeMQ<T>::~LockFreeMQ() {
 }
 
 template <typename T>
-void LockFreeMQ<T>::push(const T& data) {
+bool LockFreeMQ<T>::push(const T& data) {
+    if (is_closed_.load(std::memory_order_acquire)) {
+        return false;
+    }
     T* new_data = new T(data);
     MQNode<T>* new_node = new MQNode<T>(new_data);
 
@@ -55,7 +62,7 @@ void LockFreeMQ<T>::push(const T& data) {
             if (old_tail_next == nullptr) {
                 if (old_tail->next.compare_exchange_weak(old_tail_next, new_node)) {
                     tail_.compare_exchange_strong(old_tail, new_node);
-                    return;
+                    return true;
                 }
                 // 失败了，说明 next已经被修改，此时不需要做操作（特地更新 tail），直接到下一个循环即可
                 // 或者执行这个操作: tail_.compare_exchange_weak(old_tail, old_tail->next.load());
@@ -80,7 +87,10 @@ T* LockFreeMQ<T>::pop() {
             if (old_head == tail) {
                 // 存在两种可能，1. 为空；2. 只有一个元素，但是 next没来得及更新
                 if (old_head_next == nullptr) {
-                    return nullptr;
+                    if (is_closed_.load(std::memory_order_acquire)) {
+                        return nullptr;
+                    }
+                    continue;
                 }
                 // 辅助推进，加速
                 tail_.compare_exchange_weak(tail, old_head_next);
@@ -96,6 +106,16 @@ T* LockFreeMQ<T>::pop() {
             }
         }
     }
+}
+
+template <typename T>
+void LockFreeMQ<T>::close() {
+    is_closed_.store(true, std::memory_order_release);
+}
+
+template <typename T>
+bool LockFreeMQ<T>::is_close() const {
+    return is_closed_.load(std::memory_order_acquire);
 }
 
 }  // namespace destiny
