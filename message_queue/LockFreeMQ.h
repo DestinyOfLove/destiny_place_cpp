@@ -33,8 +33,8 @@ private:
 template <typename T>
 LockFreeMQ<T>::LockFreeMQ() {
     MQNode<T>* dummy = new MQNode<T>();
-    head_.store(dummy);
-    tail_.store(dummy);
+    head_.store(dummy, std::memory_order_relaxed);
+    tail_.store(dummy, std::memory_order_relaxed);
     is_closed_.store(false, std::memory_order_relaxed);
 }
 
@@ -44,7 +44,7 @@ LockFreeMQ<T>::~LockFreeMQ() {
         delete tmp;
         tmp = nullptr;
     }
-    delete head_.load();
+    delete head_.load(std::memory_order_relaxed);
 }
 
 template <typename T>
@@ -56,18 +56,22 @@ bool LockFreeMQ<T>::push(const T& data) {
     MQNode<T>* new_node = new MQNode<T>(new_data);
 
     while (true) {
-        MQNode<T>* old_tail = tail_.load();
-        MQNode<T>* old_tail_next = old_tail->next.load();
-        if (tail_.load() == old_tail) {
+        MQNode<T>* old_tail = tail_.load(std::memory_order_acquire);
+        MQNode<T>* old_tail_next = old_tail->next.load(std::memory_order_acquire);
+        if (tail_.load(std::memory_order_relaxed) == old_tail) {
             if (old_tail_next == nullptr) {
-                if (old_tail->next.compare_exchange_weak(old_tail_next, new_node)) {
-                    tail_.compare_exchange_strong(old_tail, new_node);
+                if (old_tail->next.compare_exchange_weak(
+                        old_tail_next, new_node, std::memory_order_release, std::memory_order_relaxed)) {
+                    tail_.compare_exchange_strong(
+                        old_tail, new_node, std::memory_order_release, std::memory_order_relaxed);
                     return true;
                 }
                 // 失败了，说明 next已经被修改，此时不需要做操作（特地更新 tail），直接到下一个循环即可
-                // 或者执行这个操作: tail_.compare_exchange_weak(old_tail, old_tail->next.load());
+                // 或者执行这个操作: tail_.compare_exchange_weak(old_tail,
+                // old_tail->next.load(std::memory_order_acquire), std::memory_order_release,std::memory_order_relaxed);
             } else {
-                tail_.compare_exchange_weak(old_tail, old_tail_next);
+                tail_.compare_exchange_weak(
+                    old_tail, old_tail_next, std::memory_order_release, std::memory_order_relaxed);
             }
         }
     }
@@ -76,14 +80,14 @@ bool LockFreeMQ<T>::push(const T& data) {
 template <typename T>
 T* LockFreeMQ<T>::pop() {
     while (true) {
-        MQNode<T>* old_head = head_.load();
-        MQNode<T>* old_head_next = old_head->next.load();
-        MQNode<T>* tail = tail_.load();
+        MQNode<T>* old_head = head_.load(std::memory_order_acquire);
+        MQNode<T>* old_head_next = old_head->next.load(std::memory_order_acquire);
+        MQNode<T>* tail = tail_.load(std::memory_order_acquire);
 
         // 尝试插入，更新 head为新的 dummy head
         // 判断队列是否为空，为空返回 nullptr
         // 不为空，则更新 head
-        if (head_.load() == old_head) {
+        if (head_.load(std::memory_order_relaxed) == old_head) {
             if (old_head == tail) {
                 // 存在两种可能，1. 为空；2. 只有一个元素，但是 next没来得及更新
                 if (old_head_next == nullptr) {
@@ -93,10 +97,11 @@ T* LockFreeMQ<T>::pop() {
                     continue;
                 }
                 // 辅助推进，加速
-                tail_.compare_exchange_weak(tail, old_head_next);
+                tail_.compare_exchange_weak(tail, old_head_next, std::memory_order_release, std::memory_order_relaxed);
             } else {
                 // 不为空。尝试更新 head
-                if (head_.compare_exchange_weak(old_head, old_head_next)) {
+                if (head_.compare_exchange_weak(
+                        old_head, old_head_next, std::memory_order_release, std::memory_order_relaxed)) {
                     // 成功了，需要返回结果，并将 next处理为 dummy
                     T* res = old_head_next->data;
                     old_head_next->data = nullptr;
