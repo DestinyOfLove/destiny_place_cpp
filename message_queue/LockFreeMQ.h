@@ -57,7 +57,8 @@ void LockFreeMQ<T>::push(const T& data) {
                     tail_.compare_exchange_strong(old_tail, new_node);
                     return;
                 }
-                tail_.compare_exchange_weak(old_tail, old_tail_next);
+                // 失败了，说明 next已经被修改，此时不需要做操作（特地更新 tail），直接到下一个循环即可
+                // 或者执行这个操作: tail_.compare_exchange_weak(old_tail, old_tail->next.load());
             } else {
                 tail_.compare_exchange_weak(old_tail, old_tail_next);
             }
