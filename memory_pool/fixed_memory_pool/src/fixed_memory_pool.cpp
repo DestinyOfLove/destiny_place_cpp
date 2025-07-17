@@ -45,17 +45,4 @@ void FixedSizeMemoryPool::deallocate(void* ptr) {
 
 }  // namespace destiny
 
-struct ToyObj {
-    int x, y;
-};
 
-using namespace destiny;
-
-int main() {
-    FixedSizeMemoryPool pool(sizeof(ToyObj), 10);
-    void* mem_ptr = pool.allocate();
-    auto toy_obj = new (mem_ptr) ToyObj();
-    toy_obj->~ToyObj();
-    pool.deallocate(mem_ptr);
-    return 0;
-}

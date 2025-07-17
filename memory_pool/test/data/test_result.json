@@ -1,0 +1,138 @@
+{
+    "metadata": {
+        "allocs_per_thread": 10000,
+        "compiler": "Apple Clang",
+        "cpu": "Apple M1 Pro (10 cores)",
+        "os": "macOS"
+    },
+    "results": [
+        {
+            "contention": "Medium",
+            "mix": "Mixed",
+            "name": "malloc/free",
+            "p99_latency": 42.0,
+            "threads": 1,
+            "throughput": 2312005.08641119
+        },
+        {
+            "contention": "Medium",
+            "mix": "Mixed",
+            "name": "malloc/free",
+            "p99_latency": 208.0,
+            "threads": 4,
+            "throughput": 6605200.86911233
+        },
+        {
+            "contention": "Medium",
+            "mix": "Mixed",
+            "name": "malloc/free",
+            "p99_latency": 209.0,
+            "threads": 16,
+            "throughput": 13517366.648009885
+        },
+        {
+            "contention": "None",
+            "mix": "32B",
+            "name": "1. BasicPool",
+            "p99_latency": 42.0,
+            "threads": 1,
+            "throughput": 10327911.179963851
+        },
+        {
+            "contention": "High",
+            "mix": "32B",
+            "name": "2. MutexPool",
+            "p99_latency": 42.0,
+            "threads": 1,
+            "throughput": 8312551.953449708
+        },
+        {
+            "contention": "High",
+            "mix": "32B",
+            "name": "3. LockFreePool",
+            "p99_latency": 42.0,
+            "threads": 1,
+            "throughput": 8112767.467802454
+        },
+        {
+            "contention": "High",
+            "mix": "32B",
+            "name": "4. ThreadLocalPool",
+            "p99_latency": 500.0,
+            "threads": 1,
+            "throughput": 8514565.867830098
+        },
+        {
+            "contention": "High",
+            "mix": "32B",
+            "name": "2. MutexPool",
+            "p99_latency": 9375.0,
+            "threads": 4,
+            "throughput": 5082726.455794511
+        },
+        {
+            "contention": "High",
+            "mix": "32B",
+            "name": "3. LockFreePool",
+            "p99_latency": 2375.0,
+            "threads": 4,
+            "throughput": 5520318.290511995
+        },
+        {
+            "contention": "High",
+            "mix": "32B",
+            "name": "4. ThreadLocalPool",
+            "p99_latency": 3291.0,
+            "threads": 4,
+            "throughput": 21825626.340911917
+        },
+        {
+            "contention": "High",
+            "mix": "32B",
+            "name": "2. MutexPool",
+            "p99_latency": 84834.0,
+            "threads": 16,
+            "throughput": 2963129.8310706723
+        },
+        {
+            "contention": "High",
+            "mix": "32B",
+            "name": "3. LockFreePool",
+            "p99_latency": 667.0,
+            "threads": 16,
+            "throughput": 8212076.885569841
+        },
+        {
+            "contention": "High",
+            "mix": "32B",
+            "name": "4. ThreadLocalPool",
+            "p99_latency": 47750.0,
+            "threads": 16,
+            "throughput": 4686624.598938439
+        },
+        {
+            "contention": "Medium",
+            "mix": "Mixed",
+            "name": "5. GeneralPool",
+            "p99_latency": 417.0,
+            "threads": 1,
+            "throughput": 3702503.8182070623
+        },
+        {
+            "contention": "Medium",
+            "mix": "Mixed",
+            "name": "5. GeneralPool",
+            "p99_latency": 83.0,
+            "threads": 4,
+            "throughput": 13693162.250964168
+        },
+        {
+            "contention": "Medium",
+            "mix": "Mixed",
+            "name": "5. GeneralPool",
+            "p99_latency": 125.0,
+            "threads": 16,
+            "throughput": 16332293.578693379
+        }
+    ]
+}
