@@ -2,7 +2,7 @@
 .history
 .idea
 
-build
-
-check_path.dSYM
-cmake-build-debug
+build/
+cmake-build-debug/
+main
+main.dSYM
