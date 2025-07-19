@@ -18,11 +18,11 @@ public:
     }
 
     ~LFUCache() override;
-    [[nodiscard]] bool get(const Key& key, Value& val) override;
+    bool get(const Key& key, Value& val) override;
     void put(const Key& key, const Value& value) override;
     void clear() override;
     std::size_t size() const override;
-    [[nodiscard]] std::size_t capacity() const override;
+    std::size_t capacity() const override;
 
 private:
     std::list<Key>& getListByFreq(int32_t freq);

@@ -17,7 +17,7 @@ public:
 
     ~LRUCache() override = default;
 
-    [[nodiscard]] bool get(const Key& key, Value& val) override;
+    bool get(const Key& key, Value& val) override;
 
     void put(const Key& key, const Value& value) override;
 
@@ -25,7 +25,7 @@ public:
 
     std::size_t size() const override;
 
-    [[nodiscard]] std::size_t capacity() const override;
+    std::size_t capacity() const override;
 
 private:
     using ListType = std::list<std::pair<Key, Value>>;
