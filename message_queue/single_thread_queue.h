@@ -5,7 +5,7 @@ namespace destiny {
 template <typename T>
 
 // 单线程 queue，非阻塞模式
-class SPSC_Queue {
+class SingleThreadQueue {
 public:
     bool push(const T& t) {
         msg_q_.push(t);
