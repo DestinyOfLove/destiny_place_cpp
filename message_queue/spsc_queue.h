@@ -87,40 +87,30 @@ SPSCQueue<T>::SPSCQueue(std::size_t capacity) : user_capacity_(capacity), buffer
 
 template <typename T>
 bool SPSCQueue<T>::push(const T& item) {
-    // 生产者：先读取自己的tail（relaxed），再读取消费者的head（acquire）
     std::size_t tail = tail_.load(std::memory_order_relaxed);
     std::size_t head = head_.load(std::memory_order_acquire);
     std::size_t next_tail = (tail + 1) % buffer_capacity_;
-
-    // 检查队列是否已满
-    if (next_tail == head) {
+    if (head == next_tail) {
         return false;
     }
 
-    // 写入数据
     msg_q_[tail] = item;
-
-    // 更新tail指针，使用release确保数据写入对消费者可见
     tail_.store(next_tail, std::memory_order_release);
     return true;
 }
 
 template <typename T>
 bool SPSCQueue<T>::pop(T& item) {
-    // 消费者：先读取自己的head（relaxed），再读取生产者的tail（acquire）
     std::size_t head = head_.load(std::memory_order_relaxed);
     std::size_t tail = tail_.load(std::memory_order_acquire);
 
-    // 检查队列是否为空
     if (head == tail) {
         return false;
     }
 
-    // 读取数据
+    std::size_t next_head = (head + 1) % buffer_capacity_;
     item = msg_q_[head];
-
-    // 更新head指针，使用release确保读取完成对生产者可见
-    head_.store((head + 1) % buffer_capacity_, std::memory_order_release);
+    head_.store(next_head, std::memory_order_release);
     return true;
 }
 
