@@ -106,7 +106,7 @@ private:
     mutable std::mutex mutex_;
     std::condition_variable not_full_;
     std::condition_variable not_empty_;
-    std::atomic<bool> closed_;
+    bool closed_;  // Protected by mutex, no need for atomic
 };
 
 // 实现部分
@@ -167,7 +167,7 @@ bool SPSCTimeoutQueue<T>::push_internal(U&& item, bool wait, const std::chrono::
         // 非阻塞模式：立即检查是否有空间
         std::size_t tail = tail_.load(std::memory_order_relaxed);
         std::size_t head = head_.load(std::memory_order_acquire);
-        if ((tail + 1) % buffer_capacity_ == head || closed_.load(std::memory_order_acquire)) {
+        if ((tail + 1) % buffer_capacity_ == head || closed_) {
             return false;
         }
     } else if (timeout) {
@@ -175,10 +175,10 @@ bool SPSCTimeoutQueue<T>::push_internal(U&& item, bool wait, const std::chrono::
         bool success = not_full_.wait_for(lock, *timeout, [this] {
             std::size_t tail = tail_.load(std::memory_order_relaxed);
             std::size_t head = head_.load(std::memory_order_acquire);
-            return (tail + 1) % buffer_capacity_ != head || closed_.load(std::memory_order_acquire);
+            return (tail + 1) % buffer_capacity_ != head || closed_;
         });
 
-        if (!success || closed_.load(std::memory_order_acquire)) {
+        if (!success || closed_) {
             return false;
         }
     } else {
@@ -186,10 +186,10 @@ bool SPSCTimeoutQueue<T>::push_internal(U&& item, bool wait, const std::chrono::
         not_full_.wait(lock, [this] {
             std::size_t tail = tail_.load(std::memory_order_relaxed);
             std::size_t head = head_.load(std::memory_order_acquire);
-            return (tail + 1) % buffer_capacity_ != head || closed_.load(std::memory_order_acquire);
+            return (tail + 1) % buffer_capacity_ != head || closed_;
         });
 
-        if (closed_.load(std::memory_order_acquire)) {
+        if (closed_) {
             return false;
         }
     }
@@ -241,7 +241,7 @@ bool SPSCTimeoutQueue<T>::pop_internal(T& item, bool wait, const std::chrono::mi
         bool success = not_empty_.wait_for(lock, *timeout, [this] {
             std::size_t head = head_.load(std::memory_order_relaxed);
             std::size_t tail = tail_.load(std::memory_order_acquire);
-            return head != tail || closed_.load(std::memory_order_acquire);
+            return head != tail || closed_;
         });
 
         // 检查是否超时或关闭
@@ -255,7 +255,7 @@ bool SPSCTimeoutQueue<T>::pop_internal(T& item, bool wait, const std::chrono::mi
         not_empty_.wait(lock, [this] {
             std::size_t head = head_.load(std::memory_order_relaxed);
             std::size_t tail = tail_.load(std::memory_order_acquire);
-            return head != tail || closed_.load(std::memory_order_acquire);
+            return head != tail || closed_;
         });
 
         // 检查是否因为关闭而退出
@@ -305,7 +305,8 @@ std::size_t SPSCTimeoutQueue<T>::capacity() const {
 
 template <typename T>
 bool SPSCTimeoutQueue<T>::isClosed() const {
-    return closed_.load(std::memory_order_acquire);
+    std::lock_guard<std::mutex> lock(mutex_);
+    return closed_;
 }
 
 // 关闭队列
@@ -313,7 +314,7 @@ template <typename T>
 void SPSCTimeoutQueue<T>::close() {
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        closed_.store(true, std::memory_order_release);
+        closed_ = true;
     }
     // 唤醒所有等待的线程
     not_full_.notify_all();

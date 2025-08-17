@@ -53,6 +53,7 @@ public:
     bool isEmpty() const;
     std::size_t size() const;
     std::size_t capacity() const;
+    bool isClosed() const;
     void close();
 
 private:
@@ -68,8 +69,8 @@ private:
 
     std::condition_variable not_full_;
     std::condition_variable not_empty_;
-    std::mutex mtx_;
-    std::atomic<bool> is_closed_;
+    mutable std::mutex mtx_;  // mutable for const methods
+    bool is_closed_;          // Protected by mutex, no need for atomic
 };
 
 template <typename T>
@@ -98,11 +99,11 @@ bool SPSCBlockingQueue<T>::push_internal(U&& item) {
     not_full_.wait(lock, [this] {
         std::size_t tail = tail_.load(std::memory_order_relaxed);
         std::size_t head = head_.load(std::memory_order_acquire);
-        return (tail + 1) % buffer_capacity_ != head || is_closed_.load(std::memory_order_acquire);
+        return (tail + 1) % buffer_capacity_ != head || is_closed_;
     });
 
     // 再次检查关闭状态（可能在等待期间被关闭）
-    if (is_closed_.load(std::memory_order_acquire)) {
+    if (is_closed_) {
         return false;
     }
 
@@ -122,7 +123,7 @@ bool SPSCBlockingQueue<T>::pop(T& item) {
     not_empty_.wait(lock, [this] {
         std::size_t head = head_.load(std::memory_order_relaxed);
         std::size_t tail = tail_.load(std::memory_order_acquire);
-        return head != tail || is_closed_.load(std::memory_order_acquire);  // 有数据或者已关闭
+        return head != tail || is_closed_;  // 有数据或者已关闭
     });
 
     // 检查是否是因为关闭而退出等待
@@ -167,10 +168,16 @@ std::size_t SPSCBlockingQueue<T>::capacity() const {
 }
 
 template <typename T>
+bool SPSCBlockingQueue<T>::isClosed() const {
+    std::lock_guard<std::mutex> lock(mtx_);
+    return is_closed_;
+}
+
+template <typename T>
 void SPSCBlockingQueue<T>::close() {
     {
         std::lock_guard<std::mutex> lock(mtx_);
-        is_closed_.store(true, std::memory_order_release);
+        is_closed_ = true;
     }  // 释放锁后再进行通知，避免通知被阻塞
     not_full_.notify_all();   // 唤醒所有等待的生产者
     not_empty_.notify_all();  // 唤醒所有等待的消费者
