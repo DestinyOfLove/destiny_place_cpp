@@ -56,6 +56,10 @@ public:
     void close();
 
 private:
+    // 内部辅助方法
+    template <typename U>
+    bool push_internal(U&& item);
+
     std::vector<T> msg_q_;
     std::atomic<std::size_t> head_{};
     std::atomic<std::size_t> tail_{};
@@ -78,6 +82,17 @@ SPSCBlockingQueue<T>::SPSCBlockingQueue(std::size_t capacity)
 
 template <typename T>
 bool SPSCBlockingQueue<T>::push(const T& item) {
+    return push_internal(item);
+}
+
+template <typename T>
+bool SPSCBlockingQueue<T>::push(T&& item) {
+    return push_internal(std::move(item));
+}
+
+template <typename T>
+template <typename U>
+bool SPSCBlockingQueue<T>::push_internal(U&& item) {
     std::unique_lock<std::mutex> lock(mtx_);
     // 等待空间，但要考虑关闭状态
     not_full_.wait(lock, [this] {
@@ -93,30 +108,7 @@ bool SPSCBlockingQueue<T>::push(const T& item) {
 
     // 执行插入
     std::size_t tail = tail_.load(std::memory_order_relaxed);
-    msg_q_[tail] = item;
-    tail_.store((tail + 1) % buffer_capacity_, std::memory_order_release);
-    not_empty_.notify_one();
-    return true;
-}
-
-template <typename T>
-bool SPSCBlockingQueue<T>::push(T&& item) {
-    std::unique_lock<std::mutex> lock(mtx_);
-    // 等待空间，但要考虑关闭状态
-    not_full_.wait(lock, [this] {
-        std::size_t tail = tail_.load(std::memory_order_relaxed);
-        std::size_t head = head_.load(std::memory_order_acquire);
-        return (tail + 1) % buffer_capacity_ != head || is_closed_.load(std::memory_order_acquire);
-    });
-
-    // 再次检查关闭状态（可能在等待期间被关闭）
-    if (is_closed_.load(std::memory_order_acquire)) {
-        return false;
-    }
-
-    // 执行插入（使用移动语义）
-    std::size_t tail = tail_.load(std::memory_order_relaxed);
-    msg_q_[tail] = std::move(item);
+    msg_q_[tail] = std::forward<U>(item);
     tail_.store((tail + 1) % buffer_capacity_, std::memory_order_release);
     not_empty_.notify_one();
     return true;
