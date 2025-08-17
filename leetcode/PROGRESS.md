@@ -2,17 +2,17 @@
 
 ## 📊 总体统计
 
-- **已完成总数**: 1/65
+- **已完成总数**: 2/65
 - **当前阶段**: 第一阶段 - 基础数据结构补强
 - **目标**: 系统化掌握主要算法模式
 
 ## 🎯 阶段进度
 
-### 第一阶段：基础数据结构补强 (1/20)
+### 第一阶段：基础数据结构补强 (2/20)
 
-#### 链表专题 (1/6)
+#### 链表专题 (2/6)
 - [x] 206. Reverse Linked List (Easy)
-- [ ] 21. Merge Two Sorted Lists (Easy) 
+- [x] 21. Merge Two Sorted Lists (Easy) 
 - [ ] 141. Linked List Cycle (Easy)
 - [ ] 19. Remove Nth Node From End (Medium)
 - [ ] 2. Add Two Numbers (Medium)
@@ -97,10 +97,11 @@
 - [ ] 371. Sum of Two Integers (Medium)
 - [ ] 287. Find the Duplicate Number (Medium)
 
-## 🏆 已完成题目 (1)
+## 🏆 已完成题目 (2)
 
-### 链表专题 (1)
+### 链表专题 (2)
 - [x] 206. Reverse Linked List (l206_reverse_linked_list.cpp)
+- [x] 21. Merge Two Sorted Lists (l21_merge_two_sorted_lists.cpp)
 
 ## 📝 练习日志
 
@@ -112,7 +113,8 @@
 
 ## 🎯 当前目标
 - [x] 206. Reverse Linked List ✅
-- [ ] 下一题：21. Merge Two Sorted Lists
+- [x] 21. Merge Two Sorted Lists ✅
+- [ ] 下一题：141. Linked List Cycle
 
 ## 📊 统计数据
 - **Easy难度**: 0/65 (0%)
