@@ -71,12 +71,27 @@ public:
      */
     std::size_t capacity() const;
 
+    /**
+     * @brief 查询接口：队列是否已关闭
+     * @return true 队列已关闭
+     * @note 线程安全
+     */
+    bool is_closed() const;
+
+    /**
+     * @brief 关闭队列
+     * @note 关闭后拒绝新的push操作，但允许读取剩余数据
+     * @note 线程安全，可以被任何线程调用
+     */
+    void close();
+
 private:
     std::vector<T> msg_q_;
     std::atomic<std::size_t> head_{};
     std::atomic<std::size_t> tail_{};
     std::size_t user_capacity_;
     std::size_t buffer_capacity_;
+    std::atomic<bool> is_closed_{false};
 };
 
 template <typename T>
@@ -87,6 +102,11 @@ SPSCQueue<T>::SPSCQueue(std::size_t capacity) : user_capacity_(capacity), buffer
 
 template <typename T>
 bool SPSCQueue<T>::push(const T& item) {
+    // 检查队列是否已关闭
+    if (is_closed_.load(std::memory_order_acquire)) {
+        return false;
+    }
+
     std::size_t tail = tail_.load(std::memory_order_relaxed);
     std::size_t head = head_.load(std::memory_order_acquire);
     std::size_t next_tail = (tail + 1) % buffer_capacity_;
@@ -138,6 +158,16 @@ std::size_t SPSCQueue<T>::size() const {
 template <typename T>
 std::size_t SPSCQueue<T>::capacity() const {
     return user_capacity_;
+}
+
+template <typename T>
+bool SPSCQueue<T>::is_closed() const {
+    return is_closed_.load(std::memory_order_acquire);
+}
+
+template <typename T>
+void SPSCQueue<T>::close() {
+    is_closed_.store(true, std::memory_order_release);
 }
 
 }  // namespace destiny
