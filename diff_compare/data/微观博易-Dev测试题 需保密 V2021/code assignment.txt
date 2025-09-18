@@ -1,0 +1,41 @@
+
+
+Please write a program to compare two columns and output their difference.
+ 
+1. Each column to compare is stored in a flat txt file, starting with a column header.
+ 
+ColumnHeader
+Value1
+Value2
+Value3
+...
+ 
+2. Columns type can be either integer or string, but in any single column the value type will be unique. For integer columns, the column name starts with "Int_" and for string columns the column name starts with "Str_".
+ 
+Int_1
+3
+5
+9
+8
+10
+459
+ 
+3. The difference of two columns should be outputted into a separate txt file. For integer columns, the value difference between the two columns should be outputted, whereas for string columns, use a "T" to represent two string match each other and use a "N" to indicate they don't match. Please refer to the attached input and output files as a reference. Note InputA1, InputA2, OutputA are one test set. The rest is another test set.
+ 
+4. Your code should be written in  C++. The main method should take three parameters that represent the names of the two input files and the output file. 
+
+Check points:
+1. Coding style
+2. Modularity
+3. Extendibility. What if other data types need to be supported (e.g., date, double)? What if more input/output source (e.g., csv, database) are needed?
+4. Other common software development principles
+
+   The main checking points of this project is to see your design ability, and by modularity and extendibility, we meant OBJECT-ORIENTED programing. Most candidates do get the point though. If in your previous work you have not used OOP extensively, below are some common design patterns that are good to know. One or more of them will be useful in doing this assignment. If you'd like to invest more in this area, here is the book I would recommend: http://en.wikipedia.org/wiki/Design_Patterns_(book)
+
+Adapter
+Composite
+Decorator
+Factory method
+Observer
+Strategy
+Visitor

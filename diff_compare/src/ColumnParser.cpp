@@ -1,0 +1,54 @@
+#include "diff_compare/ColumnParser.hpp"
+
+#include <algorithm>
+#include <cctype>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "diff_compare/ColumnType.hpp"
+
+namespace diff_compare {
+
+namespace {
+std::string sanitize_line(std::string line) {
+    if (!line.empty() && line.back() == '\r') {
+        line.pop_back();
+    }
+
+    auto is_space = [](unsigned char ch) { return std::isspace(ch) != 0; };
+
+    const auto first = std::find_if_not(line.begin(), line.end(), is_space);
+    const auto last = std::find_if_not(line.rbegin(), line.rend(), is_space).base();
+
+    if (first >= last) {
+        return {};
+    }
+
+    return std::string(first, last);
+}
+}
+
+ColumnData SimpleColumnParser::parse(std::istream& input) const {
+    std::string header;
+    if (!std::getline(input, header)) {
+        throw std::invalid_argument("Input column missing header");
+    }
+    header = sanitize_line(std::move(header));
+    const ColumnType type = columnTypeFromHeader(header);
+
+    std::vector<std::string> values;
+    std::string value;
+    while (std::getline(input, value)) {
+        value = sanitize_line(std::move(value));
+        if (value.empty()) {
+            continue;  // 忽略空行（包括仅含回车的行）
+        }
+        values.emplace_back(std::move(value));
+    }
+
+    return ColumnData(ColumnDescriptor(header, type), std::move(values));
+}
+
+}  // namespace diff_compare
