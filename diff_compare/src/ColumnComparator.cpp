@@ -11,14 +11,14 @@
 namespace diff_compare {
 namespace {
 void ensureComparable(const ColumnData& lhs, const ColumnData& rhs) {
-    if (lhs.descriptor().type() != rhs.descriptor().type()) {
-        throw std::invalid_argument("Column types do not match: " +
-                                    toString(lhs.descriptor().type()) + " vs " +
-                                    toString(rhs.descriptor().type()));
+    if (!(lhs.descriptor() == rhs.descriptor())) {
+        throw std::invalid_argument("Column descriptors do not match: " + lhs.descriptor().name() + "/"
+                                    + toString(lhs.descriptor().type()) + " vs " + rhs.descriptor().name() + "/"
+                                    + toString(rhs.descriptor().type()));
     }
     if (lhs.size() != rhs.size()) {
-        throw std::invalid_argument("Column sizes do not match: " + std::to_string(lhs.size()) +
-                                    " vs " + std::to_string(rhs.size()));
+        throw std::invalid_argument("Column sizes do not match: " + std::to_string(lhs.size()) + " vs "
+                                    + std::to_string(rhs.size()));
     }
 }
 
@@ -35,7 +35,7 @@ long long parseInteger(const std::string& value) {
     }
     return parsed;
 }
-}
+}  // namespace
 
 ColumnDiff IntColumnComparator::compare(const ColumnData& lhs, const ColumnData& rhs) const {
     ensureComparable(lhs, rhs);
@@ -51,7 +51,7 @@ ColumnDiff IntColumnComparator::compare(const ColumnData& lhs, const ColumnData&
         const long long delta = left - right;
         diffs.emplace_back(std::to_string(delta));
     }
-    ColumnDescriptor descriptor("Diff", ColumnType::Integer);
+    ColumnDescriptor descriptor("Int_Diff", ColumnType::Integer);
     return ColumnDiff(std::move(descriptor), std::move(diffs));
 }
 
@@ -66,7 +66,7 @@ ColumnDiff StringColumnComparator::compare(const ColumnData& lhs, const ColumnDa
     for (std::size_t i = 0; i < lhs.size(); ++i) {
         diffs.emplace_back(lhs.valueAt(i) == rhs.valueAt(i) ? "T" : "N");
     }
-    ColumnDescriptor descriptor("Diff", ColumnType::String);
+    ColumnDescriptor descriptor("Str_Diff", ColumnType::String);
     return ColumnDiff(std::move(descriptor), std::move(diffs));
 }
 
