@@ -18,25 +18,21 @@ namespace {
 class TxtSeriesCursor : public SeriesCursor {
 public:
     TxtSeriesCursor(std::string path, std::string header)
-        : path_(std::move(path)), expected_header_(std::move(header)) {
+        : path_(std::move(path)), expected_header_(std::move(header)), chunk_index_(0) {
         reopen();
     }
 
     bool next(std::string& value) override {
-        while (std::getline(stream_, line_buffer_)) {
-            if (!line_buffer_.empty() && line_buffer_.back() == '\r') {
-                line_buffer_.pop_back();
+        while (true) {
+            if (chunk_index_ < chunk_.size()) {
+                value.swap(chunk_[chunk_index_++]);
+                chunk_[chunk_index_ - 1].clear();
+                return true;
             }
-            const std::string_view trimmed = SimpleColumnParser::trimView(line_buffer_);
-            if (trimmed.empty()) {
-                line_buffer_.clear();
-                continue;
+            if (!fillChunk()) {
+                return false;
             }
-            value.assign(trimmed.data(), trimmed.size());
-            line_buffer_.clear();
-            return true;
         }
-        return false;
     }
 
     void reset() override { reopen(); }
@@ -64,6 +60,28 @@ private:
     std::string expected_header_;
     std::ifstream stream_;
     std::string line_buffer_;
+    std::vector<std::string> chunk_;
+    std::size_t chunk_index_;
+
+    static constexpr std::size_t kChunkSize = 1024;
+
+    bool fillChunk() {
+        chunk_.clear();
+        chunk_index_ = 0;
+        chunk_.reserve(kChunkSize);
+        while (chunk_.size() < kChunkSize && std::getline(stream_, line_buffer_)) {
+            if (!line_buffer_.empty() && line_buffer_.back() == '\r') {
+                line_buffer_.pop_back();
+            }
+            const std::string_view trimmed = SimpleColumnParser::trimView(line_buffer_);
+            if (trimmed.empty()) {
+                continue;
+            }
+            chunk_.emplace_back(trimmed.begin(), trimmed.end());
+        }
+        line_buffer_.clear();
+        return !chunk_.empty();
+    }
 };
 
 class TxtSeriesCursorFactory : public SeriesCursorFactory {
