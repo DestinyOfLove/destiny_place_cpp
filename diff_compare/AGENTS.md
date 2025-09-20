@@ -12,6 +12,7 @@
 - Rebuild quickly: `CCACHE_DISABLE=1 cmake --build build` when sandboxed ccache writes are blocked.
 - Run unit tests: `ctest --preset diff_compare` or execute `./build/diff_compare_tests` after a build.
 - Execute the CLI: `./build/diff_compare` reads column inputs and writes formatted diffs.
+- 依赖：内存池依赖 Boost.Pool（头文件）。若缺少请运行 `vcpkg install boost-pool` 后重新配置。
 
 ## Coding Style & Naming Conventions
 - The repository pins C++11 with Google-style formatting; run `clang-format -i <files>` before committing.

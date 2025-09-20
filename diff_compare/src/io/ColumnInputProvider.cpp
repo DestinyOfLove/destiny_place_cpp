@@ -2,10 +2,12 @@
 
 #include <fmt/core.h>
 
+#include <boost/pool/pool_alloc.hpp>
 #include <fstream>
 #include <stdexcept>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 #include "diff_compare/core/SeriesDescriptor.hpp"
 #include "diff_compare/core/ValueType.hpp"
@@ -15,12 +17,16 @@ namespace diff_compare {
 
 namespace {
 
+using PooledCharAllocator = boost::pool_allocator<char>;
+using PooledString = std::basic_string<char, std::char_traits<char>, PooledCharAllocator>;
+using PooledStringAllocator = boost::pool_allocator<PooledString>;
+
 class TxtSeriesCursor : public SeriesCursor {
 public:
     TxtSeriesCursor(std::string path, std::string header)
         : path_(std::move(path)),
           expected_header_(std::move(header)),
-          chunk_(kChunkSize),
+          chunk_(kChunkSize, PooledString(), PooledStringAllocator()),
           chunk_index_(0),
           chunk_size_(0) {
         reopen();
@@ -29,8 +35,9 @@ public:
     bool next(std::string& value) override {
         while (true) {
             if (chunk_index_ < chunk_size_) {
-                value.swap(chunk_[chunk_index_]);
-                chunk_[chunk_index_].clear();
+                PooledString& slot = chunk_[chunk_index_];
+                value.assign(slot.data(), slot.size());
+                slot.clear();
                 ++chunk_index_;
                 return true;
             }
@@ -67,7 +74,7 @@ private:
     std::string expected_header_;
     std::ifstream stream_;
     std::string line_buffer_;
-    std::vector<std::string> chunk_;
+    std::vector<PooledString, PooledStringAllocator> chunk_;
     std::size_t chunk_index_;
     std::size_t chunk_size_;
 
@@ -84,7 +91,7 @@ private:
             if (trimmed.empty()) {
                 continue;
             }
-            std::string& slot = chunk_[chunk_size_++];
+            PooledString& slot = chunk_[chunk_size_++];
             slot.assign(trimmed.begin(), trimmed.end());
         }
         line_buffer_.clear();

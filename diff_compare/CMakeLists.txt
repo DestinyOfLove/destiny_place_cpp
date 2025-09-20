@@ -13,6 +13,7 @@ option(DIFF_COMPARE_ENABLE_TESTS "Build diff_compare tests" ON)
 option(DIFF_COMPARE_ENABLE_PERF "Build diff_compare performance benchmarks" ON)
 
 find_package(fmt CONFIG REQUIRED)
+find_package(Boost REQUIRED)
 if (DIFF_COMPARE_ENABLE_PERF)
     find_package(benchmark CONFIG QUIET)
 endif()
@@ -38,7 +39,7 @@ target_include_directories(diff_compare_lib
 )
 
 target_compile_features(diff_compare_lib PUBLIC cxx_std_11)
-target_link_libraries(diff_compare_lib PUBLIC fmt::fmt)
+target_link_libraries(diff_compare_lib PUBLIC fmt::fmt Boost::boost)
 
 add_executable(diff_compare src/app/main.cpp)
 
