@@ -22,13 +22,13 @@ public:
     }
 
     bool next(std::string& value) override {
-        std::string line;
-        while (std::getline(stream_, line)) {
-            std::string sanitized = SimpleColumnParser::sanitizeLine(std::move(line));
-            if (sanitized.empty()) {
+        while (std::getline(stream_, line_buffer_)) {
+            sanitized_buffer_ = SimpleColumnParser::sanitizeLine(std::move(line_buffer_));
+            if (sanitized_buffer_.empty()) {
                 continue;
             }
-            value = std::move(sanitized);
+            value.swap(sanitized_buffer_);
+            line_buffer_.swap(sanitized_buffer_);
             return true;
         }
         return false;
@@ -58,6 +58,8 @@ private:
     std::string path_;
     std::string expected_header_;
     std::ifstream stream_;
+    std::string line_buffer_;
+    std::string sanitized_buffer_;
 };
 
 class TxtSeriesCursorFactory : public SeriesCursorFactory {
