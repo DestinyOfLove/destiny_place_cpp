@@ -2,6 +2,7 @@
 
 ## Project Structure & Module Organization
 - See `ARCHITECTURE.md` for a high-level view of the Series core and Column I/O layers.
+- Performance history lives in `docs/perf_iter.md`; append new benchmark结果（附 commit id）后再提交代码。
 - Headers live under `include/diff_compare/{core,io,app}/` with matching implementations in `src/{core,io,app}/`; keep layer boundaries clean when adding files.
 - `test/` houses GoogleTest suites such as `test_diff_compare.cpp`; mirror the directory of the code under test.
 - Generated build trees default to `build/`; Ninja, CMake presets, and ccache outputs stay outside source folders.
