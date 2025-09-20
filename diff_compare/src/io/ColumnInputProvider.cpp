@@ -4,8 +4,8 @@
 
 #include <fstream>
 #include <stdexcept>
-#include <utility>
 #include <string_view>
+#include <utility>
 
 #include "diff_compare/core/SeriesDescriptor.hpp"
 #include "diff_compare/core/ValueType.hpp"
@@ -18,15 +18,20 @@ namespace {
 class TxtSeriesCursor : public SeriesCursor {
 public:
     TxtSeriesCursor(std::string path, std::string header)
-        : path_(std::move(path)), expected_header_(std::move(header)), chunk_index_(0) {
+        : path_(std::move(path)),
+          expected_header_(std::move(header)),
+          chunk_(kChunkSize),
+          chunk_index_(0),
+          chunk_size_(0) {
         reopen();
     }
 
     bool next(std::string& value) override {
         while (true) {
-            if (chunk_index_ < chunk_.size()) {
-                value.swap(chunk_[chunk_index_++]);
-                chunk_[chunk_index_ - 1].clear();
+            if (chunk_index_ < chunk_size_) {
+                value.swap(chunk_[chunk_index_]);
+                chunk_[chunk_index_].clear();
+                ++chunk_index_;
                 return true;
             }
             if (!fillChunk()) {
@@ -54,6 +59,8 @@ private:
             throw std::runtime_error(fmt::format(
                 "Column header mismatch in {}: expected '{}' but got '{}'", path_, expected_header_, headerLine));
         }
+        chunk_index_ = 0;
+        chunk_size_ = 0;
     }
 
     std::string path_;
@@ -62,14 +69,14 @@ private:
     std::string line_buffer_;
     std::vector<std::string> chunk_;
     std::size_t chunk_index_;
+    std::size_t chunk_size_;
 
     static constexpr std::size_t kChunkSize = 1024;
 
     bool fillChunk() {
-        chunk_.clear();
+        chunk_size_ = 0;
         chunk_index_ = 0;
-        chunk_.reserve(kChunkSize);
-        while (chunk_.size() < kChunkSize && std::getline(stream_, line_buffer_)) {
+        while (chunk_size_ < kChunkSize && std::getline(stream_, line_buffer_)) {
             if (!line_buffer_.empty() && line_buffer_.back() == '\r') {
                 line_buffer_.pop_back();
             }
@@ -77,10 +84,11 @@ private:
             if (trimmed.empty()) {
                 continue;
             }
-            chunk_.emplace_back(trimmed.begin(), trimmed.end());
+            std::string& slot = chunk_[chunk_size_++];
+            slot.assign(trimmed.begin(), trimmed.end());
         }
         line_buffer_.clear();
-        return !chunk_.empty();
+        return chunk_size_ > 0;
     }
 };
 

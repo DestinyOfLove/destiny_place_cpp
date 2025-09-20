@@ -167,6 +167,42 @@ TEST(SimpleColumnParserTest, TrimsWhitespaceAndSkipsEmptyLines) {
     EXPECT_EQ("value2", data.valueAt(1));
 }
 
+TEST(ParallelNumericSeriesComparatorTest, MatchesSequentialComparator) {
+    std::vector<std::string> values_a;
+    std::vector<std::string> values_b;
+    for (int i = 0; i < 1000; ++i) {
+        values_a.emplace_back(std::to_string(i * 3));
+        values_b.emplace_back(std::to_string(i * 3 - (i % 5 == 0 ? 1 : 0)));
+    }
+    const SeriesData lhs = makeSeriesData("Int_Parallel", ValueType::Integer, values_a);
+    const SeriesData rhs = makeSeriesData("Int_Parallel", ValueType::Integer, values_b);
+
+    ParallelNumericSeriesComparator parallel;
+    const SeriesDiff parallel_diff = parallel.compare(lhs, rhs);
+    NumericSeriesComparator sequential;
+    const SeriesDiff sequential_diff = sequential.compare(lhs, rhs);
+
+    EXPECT_EQ(sequential_diff.values(), parallel_diff.values());
+}
+
+TEST(ParallelTextSeriesComparatorTest, MatchesSequentialComparator) {
+    std::vector<std::string> values_a;
+    std::vector<std::string> values_b;
+    for (int i = 0; i < 512; ++i) {
+        values_a.emplace_back(i % 2 == 0 ? "even" : "odd");
+        values_b.emplace_back(i % 4 == 0 ? "other" : values_a.back());
+    }
+    const SeriesData lhs = makeSeriesData("Str_Parallel", ValueType::String, values_a);
+    const SeriesData rhs = makeSeriesData("Str_Parallel", ValueType::String, values_b);
+
+    ParallelTextSeriesComparator parallel(4);
+    const SeriesDiff parallel_diff = parallel.compare(lhs, rhs);
+    TextSeriesComparator sequential;
+    const SeriesDiff sequential_diff = sequential.compare(lhs, rhs);
+
+    EXPECT_EQ(sequential_diff.values(), parallel_diff.values());
+}
+
 TEST(SeriesComparatorFactoryTest, AllowsOverridingRegisteredComparator) {
     class StubTextComparator : public SeriesComparator {
     public:
