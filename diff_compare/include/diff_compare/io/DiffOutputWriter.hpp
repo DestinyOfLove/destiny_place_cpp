@@ -3,22 +3,22 @@
 #include <memory>
 #include <string>
 
-#include "diff_compare/core/SeriesDiff.hpp"
 #include "diff_compare/io/OutputFormatter.hpp"
+#include "diff_compare/io/SeriesOutputWriter.hpp"
 
 namespace diff_compare {
 
-class DiffOutputWriter {
+class DiffOutputWriter : public SeriesOutputWriter {
 public:
     virtual ~DiffOutputWriter() = default;
-    virtual void write(const SeriesDiff& diff, const std::string& path) const = 0;
+    void writeSeries(const SeriesDiff& diff, const std::string& path) const override = 0;
 };
 
 class TxtDiffOutputWriter : public DiffOutputWriter {
 public:
     explicit TxtDiffOutputWriter(std::shared_ptr<const OutputFormatter> formatter);
 
-    void write(const SeriesDiff& diff, const std::string& path) const override;
+    void writeSeries(const SeriesDiff& diff, const std::string& path) const override;
 
 private:
     std::shared_ptr<const OutputFormatter> formatter_;

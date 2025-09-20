@@ -2,14 +2,14 @@
 
 ## Layered Design
 - **Series Core**: Pure domain model (`SeriesDescriptor`, `SeriesData`, `SeriesDiff`) plus comparison strategies. This layer is unaware of files or "columns" and only reasons about homogeneous series of string values. Comparators implement `SeriesComparator` and return `SeriesDiff` objects.
-- **Column I/O Boundary**: File-oriented adapters (`ColumnParser`, `ColumnInputProvider`, `TxtDiffOutputWriter`) translate between text files and the core series model. They enforce header prefixes, build `SeriesDescriptor`s, and hand off work to the core.
+- **Column I/O Boundary**: Generic `SeriesInputProvider`/`SeriesOutputWriter` contracts decouple the core from transport concerns; the default text stack (`ColumnParser`, `TxtColumnInputProvider`, `TxtDiffOutputWriter`) adapts them to newline-delimited columns.
 - **Application Shell**: `ColumnProcessingPipeline` orchestrates providers, comparator factories, and writers. `ColumnDiffApp` parses CLI arguments and wires dependencies.
 
 ## Data Flow
 1. CLI receives three paths (A, B, output) and delegates to `ColumnProcessingPipeline`.
-2. `ColumnInputProvider` reads each file, `ColumnParser` trims whitespace, infers `ValueType`, and emits `SeriesData`.
+2. A `SeriesInputProvider` reads each source; the default `TxtColumnInputProvider` uses `ColumnParser` to trim whitespace, infer `ValueType`, and emit `SeriesData`.
 3. `SeriesComparatorFactory` selects a `SeriesComparator` based on `SeriesDescriptor::type()` and executes the comparison.
-4. `SeriesDiff` returns to the boundary where `PlainTextOutputFormatter` and `TxtDiffOutputWriter` persist results.
+4. `SeriesDiff` returns to the boundary where a `SeriesOutputWriter` (e.g., `TxtDiffOutputWriter` + `PlainTextOutputFormatter`) persists results.
 
 ## Extension Checklist
 ### Adding a New Value Type
@@ -19,8 +19,8 @@
 4. Add unit tests covering parsing, comparator behavior, and pipeline integration.
 
 ### Supporting Alternative Inputs/Outputs
-- Implement a new `ColumnParser`/`ColumnInputProvider` pair (e.g., CSV parser) that still returns `SeriesData`.
-- Provide a matching writer by subclassing `DiffOutputWriter` (e.g., JSON output) while reusing `SeriesDiff`.
+- Implement a new `SeriesInputProvider` (wrapping a bespoke parser or data source such as CSV/DB) that still returns `SeriesData`.
+- Provide a matching `SeriesOutputWriter` (e.g., JSON output) while reusing `SeriesDiff` and optionally sharing formatters.
 - Register the new components in a factory or wire them in an alternate `main` if the build needs multiple front ends.
 
 ## Naming & Organization
