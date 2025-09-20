@@ -9,6 +9,7 @@
 
 #include "diff_compare/core/SeriesDescriptor.hpp"
 #include "diff_compare/core/ValueType.hpp"
+#include <fmt/core.h>
 
 namespace diff_compare {
 
@@ -34,7 +35,7 @@ std::string sanitize_line(std::string line) {
 SeriesData SimpleColumnParser::parse(std::istream& input) const {
     std::string header;
     if (!std::getline(input, header)) {
-        throw std::invalid_argument("Input column missing header");
+        throw std::invalid_argument(fmt::format("Input column missing header"));
     }
     header = sanitize_line(std::move(header));
     const ValueType type = valueTypeFromHeader(header);

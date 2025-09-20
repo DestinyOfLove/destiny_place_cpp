@@ -5,12 +5,14 @@
 #include <stdexcept>
 #include <utility>
 
+#include <fmt/core.h>
+
 namespace diff_compare {
 
 ColumnDiffApp::ColumnDiffApp(std::shared_ptr<const ColumnProcessingPipeline> pipeline)
     : pipeline_(std::move(pipeline)) {
     if (!pipeline_) {
-        throw std::invalid_argument("ColumnDiffApp requires a pipeline");
+        throw std::invalid_argument(fmt::format("ColumnDiffApp requires a pipeline"));
     }
 }
 
@@ -31,7 +33,7 @@ int ColumnDiffApp::run(int argc, char* argv[]) const {
 
 void ColumnDiffApp::validateArgs(int argc) const {
     if (argc != 4) {
-        throw std::invalid_argument("Expected exactly three arguments: <inputA> <inputB> <output>");
+        throw std::invalid_argument(fmt::format("Expected exactly three arguments: <inputA> <inputB> <output>"));
     }
 }
 

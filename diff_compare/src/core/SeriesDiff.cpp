@@ -3,6 +3,8 @@
 #include <stdexcept>
 #include <utility>
 
+#include <fmt/core.h>
+
 namespace diff_compare {
 
 SeriesDiff::SeriesDiff(SeriesDescriptor descriptor, std::vector<std::string> values)
@@ -10,7 +12,7 @@ SeriesDiff::SeriesDiff(SeriesDescriptor descriptor, std::vector<std::string> val
 
 const std::string& SeriesDiff::valueAt(std::size_t index) const {
     if (index >= values_.size()) {
-        throw std::out_of_range("SeriesDiff index out of range");
+        throw std::out_of_range(fmt::format("SeriesDiff index out of range"));
     }
     return values_[index];
 }

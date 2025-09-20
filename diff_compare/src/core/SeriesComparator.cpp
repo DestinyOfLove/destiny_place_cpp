@@ -7,18 +7,20 @@
 #include <vector>
 
 #include "diff_compare/core/ValueType.hpp"
+#include <fmt/core.h>
 
 namespace diff_compare {
 namespace {
 void ensureComparable(const SeriesData& lhs, const SeriesData& rhs) {
     if (!(lhs.descriptor() == rhs.descriptor())) {
-        throw std::invalid_argument("Series descriptors do not match: " + lhs.descriptor().name() + "/"
-                                    + toString(lhs.descriptor().type()) + " vs " + rhs.descriptor().name() + "/"
-                                    + toString(rhs.descriptor().type()));
+        throw std::invalid_argument(fmt::format("Series descriptors do not match: {}/{} vs {}/{}",
+                                                lhs.descriptor().name(),
+                                                toString(lhs.descriptor().type()),
+                                                rhs.descriptor().name(),
+                                                toString(rhs.descriptor().type())));
     }
     if (lhs.size() != rhs.size()) {
-        throw std::invalid_argument("Series sizes do not match: " + std::to_string(lhs.size()) + " vs "
-                                    + std::to_string(rhs.size()));
+        throw std::invalid_argument(fmt::format("Series sizes do not match: {} vs {}", lhs.size(), rhs.size()));
     }
 }
 
@@ -28,10 +30,10 @@ long long parseInteger(const std::string& value) {
     try {
         parsed = std::stoll(value, &idx);
     } catch (const std::exception&) {
-        throw std::invalid_argument("Invalid integer value: " + value);
+        throw std::invalid_argument(fmt::format("Invalid integer value: '{}'", value));
     }
     if (idx != value.size()) {
-        throw std::invalid_argument("Invalid integer value: " + value);
+        throw std::invalid_argument(fmt::format("Invalid integer value: '{}'", value));
     }
     return parsed;
 }
@@ -40,7 +42,8 @@ long long parseInteger(const std::string& value) {
 SeriesDiff NumericSeriesComparator::compare(const SeriesData& lhs, const SeriesData& rhs) const {
     ensureComparable(lhs, rhs);
     if (lhs.descriptor().type() != ValueType::Integer) {
-        throw std::invalid_argument("NumericSeriesComparator received non-integer input");
+        throw std::invalid_argument(
+            fmt::format("NumericSeriesComparator received {} input", toString(lhs.descriptor().type())));
     }
 
     std::vector<std::string> diffs;
@@ -58,7 +61,8 @@ SeriesDiff NumericSeriesComparator::compare(const SeriesData& lhs, const SeriesD
 SeriesDiff TextSeriesComparator::compare(const SeriesData& lhs, const SeriesData& rhs) const {
     ensureComparable(lhs, rhs);
     if (lhs.descriptor().type() != ValueType::String) {
-        throw std::invalid_argument("TextSeriesComparator received non-string input");
+        throw std::invalid_argument(
+            fmt::format("TextSeriesComparator received {} input", toString(lhs.descriptor().type())));
     }
 
     std::vector<std::string> diffs;

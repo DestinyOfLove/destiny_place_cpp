@@ -11,6 +11,8 @@ include(CTest)
 enable_testing()
 option(DIFF_COMPARE_ENABLE_TESTS "Build diff_compare tests" ON)
 
+find_package(fmt CONFIG REQUIRED)
+
 add_library(diff_compare_lib
     src/app/ColumnDiffApp.cpp
     src/app/ColumnProcessingPipeline.cpp
@@ -32,6 +34,7 @@ target_include_directories(diff_compare_lib
 )
 
 target_compile_features(diff_compare_lib PUBLIC cxx_std_11)
+target_link_libraries(diff_compare_lib PUBLIC fmt::fmt)
 
 add_executable(diff_compare src/app/main.cpp)
 

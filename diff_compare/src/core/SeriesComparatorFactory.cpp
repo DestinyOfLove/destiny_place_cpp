@@ -7,10 +7,14 @@
 #include <utility>
 
 #include "diff_compare/core/ValueType.hpp"
+#include <fmt/core.h>
 
 namespace diff_compare {
 
 namespace {
+
+static_assert(static_cast<int>(ValueType::Count) == 2,
+              "Update comparator registry initialization when adding new ValueType values.");
 
 std::map<ValueType, SeriesComparatorFactory::ComparatorBuilder>& comparatorRegistry() {
     static std::map<ValueType, SeriesComparatorFactory::ComparatorBuilder> registry = [] {
@@ -33,6 +37,9 @@ std::mutex& registryMutex() {
 
 void SeriesComparatorFactory::registerComparator(ValueType type, ComparatorBuilder builder) {
     std::lock_guard<std::mutex> lock(registryMutex());
+    if (!builder) {
+        throw std::invalid_argument(fmt::format("Comparator builder for {} must be non-null", toString(type)));
+    }
     comparatorRegistry()[type] = std::move(builder);
 }
 
@@ -41,7 +48,7 @@ std::unique_ptr<SeriesComparator> SeriesComparatorFactory::create(const SeriesDe
     auto& registry = comparatorRegistry();
     const auto it = registry.find(descriptor.type());
     if (it == registry.end()) {
-        throw std::invalid_argument("Unsupported value type: " + toString(descriptor.type()));
+        throw std::invalid_argument(fmt::format("Unsupported value type: {}", toString(descriptor.type())));
     }
     return it->second();
 }

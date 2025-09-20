@@ -3,13 +3,15 @@
 #include <stdexcept>
 #include <utility>
 
+#include <fmt/core.h>
+
 namespace diff_compare {
 
 SeriesDescriptor::SeriesDescriptor(std::string name, ValueType type) : name_(std::move(name)), type_(type) {
     const ValueType inferred = valueTypeFromHeader(name_);
     if (inferred != type_) {
-        throw std::invalid_argument("Series name/type mismatch: " + name_ + " implies " + toString(inferred)
-                                    + " but got " + toString(type_));
+        throw std::invalid_argument(fmt::format(
+            "Series name/type mismatch: '{}' implies {} but got {}", name_, toString(inferred), toString(type_)));
     }
 }
 

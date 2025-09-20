@@ -6,7 +6,8 @@ namespace diff_compare {
 
 enum class ValueType {
     Integer,
-    String
+    String,
+    Count
 };
 
 struct ValueTraits {

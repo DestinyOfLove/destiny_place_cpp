@@ -3,6 +3,8 @@
 #include <stdexcept>
 #include <utility>
 
+#include <fmt/core.h>
+
 namespace diff_compare {
 
 ColumnProcessingPipeline::ColumnProcessingPipeline(std::shared_ptr<const SeriesInputProvider> input_provider,
@@ -12,13 +14,13 @@ ColumnProcessingPipeline::ColumnProcessingPipeline(std::shared_ptr<const SeriesI
       comparator_factory_(std::move(comparator_factory)),
       output_writer_(std::move(output_writer)) {
     if (!input_provider_) {
-        throw std::invalid_argument("ColumnProcessingPipeline requires an input provider");
+        throw std::invalid_argument(fmt::format("ColumnProcessingPipeline requires an input provider"));
     }
     if (!comparator_factory_) {
-        throw std::invalid_argument("ColumnProcessingPipeline requires a comparator factory");
+        throw std::invalid_argument(fmt::format("ColumnProcessingPipeline requires a comparator factory"));
     }
     if (!output_writer_) {
-        throw std::invalid_argument("ColumnProcessingPipeline requires an output writer");
+        throw std::invalid_argument(fmt::format("ColumnProcessingPipeline requires an output writer"));
     }
 }
 
