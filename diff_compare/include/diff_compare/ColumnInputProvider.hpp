@@ -4,20 +4,21 @@
 #include <string>
 
 #include "diff_compare/ColumnParser.hpp"
+#include "diff_compare/SeriesData.hpp"
 
 namespace diff_compare {
 
 class ColumnInputProvider {
 public:
     virtual ~ColumnInputProvider() = default;
-    virtual ColumnData readColumn(const std::string& path) const = 0;
+    virtual SeriesData readColumn(const std::string& path) const = 0;
 };
 
 class TxtColumnInputProvider : public ColumnInputProvider {
 public:
     explicit TxtColumnInputProvider(std::shared_ptr<const ColumnParser> parser);
 
-    ColumnData readColumn(const std::string& path) const override;
+    SeriesData readColumn(const std::string& path) const override;
 
 private:
     std::shared_ptr<const ColumnParser> parser_;

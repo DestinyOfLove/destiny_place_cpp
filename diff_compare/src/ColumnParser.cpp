@@ -7,7 +7,8 @@
 #include <utility>
 #include <vector>
 
-#include "diff_compare/ColumnType.hpp"
+#include "diff_compare/SeriesDescriptor.hpp"
+#include "diff_compare/ValueType.hpp"
 
 namespace diff_compare {
 
@@ -28,15 +29,15 @@ std::string sanitize_line(std::string line) {
 
     return std::string(first, last);
 }
-}
+}  // namespace
 
-ColumnData SimpleColumnParser::parse(std::istream& input) const {
+SeriesData SimpleColumnParser::parse(std::istream& input) const {
     std::string header;
     if (!std::getline(input, header)) {
         throw std::invalid_argument("Input column missing header");
     }
     header = sanitize_line(std::move(header));
-    const ColumnType type = columnTypeFromHeader(header);
+    const ValueType type = valueTypeFromHeader(header);
 
     std::vector<std::string> values;
     std::string value;
@@ -48,7 +49,7 @@ ColumnData SimpleColumnParser::parse(std::istream& input) const {
         values.emplace_back(std::move(value));
     }
 
-    return ColumnData(ColumnDescriptor(header, type), std::move(values));
+    return SeriesData(SeriesDescriptor(header, type), std::move(values));
 }
 
 }  // namespace diff_compare

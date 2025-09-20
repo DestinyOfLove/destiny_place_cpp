@@ -13,7 +13,7 @@ TxtDiffOutputWriter::TxtDiffOutputWriter(std::shared_ptr<const OutputFormatter> 
     }
 }
 
-void TxtDiffOutputWriter::write(const ColumnDiff& diff, const std::string& path) const {
+void TxtDiffOutputWriter::write(const SeriesDiff& diff, const std::string& path) const {
     std::ofstream output(path);
     if (!output.is_open()) {
         throw std::runtime_error("Failed to open output file: " + path);

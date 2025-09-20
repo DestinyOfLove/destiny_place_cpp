@@ -4,22 +4,24 @@
 #include <string>
 #include <vector>
 
-#include "diff_compare/ColumnDescriptor.hpp"
+#include "diff_compare/SeriesDescriptor.hpp"
 
 namespace diff_compare {
 
-class ColumnDiff {
+class SeriesDiff {
 public:
-    ColumnDiff(ColumnDescriptor descriptor, std::vector<std::string> values);
+    SeriesDiff(SeriesDescriptor descriptor, std::vector<std::string> values);
 
-    const ColumnDescriptor& descriptor() const noexcept { return descriptor_; }
+    const SeriesDescriptor& descriptor() const noexcept { return descriptor_; }
+
     const std::vector<std::string>& values() const noexcept { return values_; }
 
     std::size_t size() const noexcept { return values_.size(); }
+
     const std::string& valueAt(std::size_t index) const;
 
 private:
-    ColumnDescriptor descriptor_;
+    SeriesDescriptor descriptor_;
     std::vector<std::string> values_;
 };
 

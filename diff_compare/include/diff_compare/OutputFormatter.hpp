@@ -4,19 +4,19 @@
 #include <string>
 #include <vector>
 
-#include "diff_compare/ColumnDiff.hpp"
+#include "diff_compare/SeriesDiff.hpp"
 
 namespace diff_compare {
 
 class OutputFormatter {
 public:
     virtual ~OutputFormatter() = default;
-    virtual std::vector<std::string> format(const ColumnDiff& diff) const = 0;
+    virtual std::vector<std::string> format(const SeriesDiff& diff) const = 0;
 };
 
 class PlainTextOutputFormatter : public OutputFormatter {
 public:
-    std::vector<std::string> format(const ColumnDiff& diff) const override;
+    std::vector<std::string> format(const SeriesDiff& diff) const override;
 };
 
 }  // namespace diff_compare

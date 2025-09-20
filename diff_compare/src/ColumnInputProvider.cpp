@@ -13,7 +13,7 @@ TxtColumnInputProvider::TxtColumnInputProvider(std::shared_ptr<const ColumnParse
     }
 }
 
-ColumnData TxtColumnInputProvider::readColumn(const std::string& path) const {
+SeriesData TxtColumnInputProvider::readColumn(const std::string& path) const {
     std::ifstream input(path);
     if (!input.is_open()) {
         throw std::runtime_error("Failed to open input file: " + path);

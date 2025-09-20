@@ -12,16 +12,16 @@ enable_testing()
 option(DIFF_COMPARE_ENABLE_TESTS "Build diff_compare tests" ON)
 
 add_library(diff_compare_lib
-    src/ColumnComparator.cpp
-    src/ColumnComparatorFactory.cpp
-    src/ColumnData.cpp
-    src/ColumnDescriptor.cpp
-    src/ColumnDiff.cpp
+    src/SeriesComparator.cpp
+    src/SeriesComparatorFactory.cpp
+    src/SeriesData.cpp
+    src/SeriesDescriptor.cpp
+    src/SeriesDiff.cpp
     src/ColumnDiffApp.cpp
     src/ColumnInputProvider.cpp
     src/ColumnParser.cpp
     src/ColumnProcessingPipeline.cpp
-    src/ColumnType.cpp
+    src/ValueType.cpp
     src/DiffOutputWriter.cpp
     src/OutputFormatter.cpp
 )

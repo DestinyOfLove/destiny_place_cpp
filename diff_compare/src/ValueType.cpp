@@ -1,4 +1,4 @@
-#include "diff_compare/ColumnType.hpp"
+#include "diff_compare/ValueType.hpp"
 
 #include <stdexcept>
 #include <string>
@@ -10,24 +10,24 @@ const std::string kIntPrefix("Int_");
 const std::string kStrPrefix("Str_");
 }  // namespace
 
-ColumnType columnTypeFromHeader(const std::string& header) {
+ValueType valueTypeFromHeader(const std::string& header) {
     if (header.compare(0, kIntPrefix.size(), kIntPrefix) == 0) {
-        return ColumnType::Integer;
+        return ValueType::Integer;
     }
     if (header.compare(0, kStrPrefix.size(), kStrPrefix) == 0) {
-        return ColumnType::String;
+        return ValueType::String;
     }
     throw std::invalid_argument("Unsupported column header prefix: " + header);
 }
 
-std::string toString(ColumnType type) {
+std::string toString(ValueType type) {
     switch (type) {
-        case ColumnType::Integer:
+        case ValueType::Integer:
             return "Integer";
-        case ColumnType::String:
+        case ValueType::String:
             return "String";
     }
-    throw std::logic_error("Unknown ColumnType");
+    throw std::logic_error("Unknown ValueType");
 }
 
 }  // namespace diff_compare

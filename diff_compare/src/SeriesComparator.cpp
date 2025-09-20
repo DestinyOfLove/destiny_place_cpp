@@ -1,4 +1,4 @@
-#include "diff_compare/ColumnComparator.hpp"
+#include "diff_compare/SeriesComparator.hpp"
 
 #include <cstdlib>
 #include <stdexcept>
@@ -6,18 +6,18 @@
 #include <utility>
 #include <vector>
 
-#include "diff_compare/ColumnType.hpp"
+#include "diff_compare/ValueType.hpp"
 
 namespace diff_compare {
 namespace {
-void ensureComparable(const ColumnData& lhs, const ColumnData& rhs) {
+void ensureComparable(const SeriesData& lhs, const SeriesData& rhs) {
     if (!(lhs.descriptor() == rhs.descriptor())) {
-        throw std::invalid_argument("Column descriptors do not match: " + lhs.descriptor().name() + "/"
+        throw std::invalid_argument("Series descriptors do not match: " + lhs.descriptor().name() + "/"
                                     + toString(lhs.descriptor().type()) + " vs " + rhs.descriptor().name() + "/"
                                     + toString(rhs.descriptor().type()));
     }
     if (lhs.size() != rhs.size()) {
-        throw std::invalid_argument("Column sizes do not match: " + std::to_string(lhs.size()) + " vs "
+        throw std::invalid_argument("Series sizes do not match: " + std::to_string(lhs.size()) + " vs "
                                     + std::to_string(rhs.size()));
     }
 }
@@ -37,10 +37,10 @@ long long parseInteger(const std::string& value) {
 }
 }  // namespace
 
-ColumnDiff IntColumnComparator::compare(const ColumnData& lhs, const ColumnData& rhs) const {
+SeriesDiff NumericSeriesComparator::compare(const SeriesData& lhs, const SeriesData& rhs) const {
     ensureComparable(lhs, rhs);
-    if (lhs.descriptor().type() != ColumnType::Integer) {
-        throw std::invalid_argument("IntColumnComparator received non-integer input");
+    if (lhs.descriptor().type() != ValueType::Integer) {
+        throw std::invalid_argument("NumericSeriesComparator received non-integer input");
     }
 
     std::vector<std::string> diffs;
@@ -51,14 +51,14 @@ ColumnDiff IntColumnComparator::compare(const ColumnData& lhs, const ColumnData&
         const long long delta = left - right;
         diffs.emplace_back(std::to_string(delta));
     }
-    ColumnDescriptor descriptor("Int_Diff", ColumnType::Integer);
-    return ColumnDiff(std::move(descriptor), std::move(diffs));
+    SeriesDescriptor descriptor("Int_Diff", ValueType::Integer);
+    return SeriesDiff(std::move(descriptor), std::move(diffs));
 }
 
-ColumnDiff StringColumnComparator::compare(const ColumnData& lhs, const ColumnData& rhs) const {
+SeriesDiff TextSeriesComparator::compare(const SeriesData& lhs, const SeriesData& rhs) const {
     ensureComparable(lhs, rhs);
-    if (lhs.descriptor().type() != ColumnType::String) {
-        throw std::invalid_argument("StringColumnComparator received non-string input");
+    if (lhs.descriptor().type() != ValueType::String) {
+        throw std::invalid_argument("TextSeriesComparator received non-string input");
     }
 
     std::vector<std::string> diffs;
@@ -66,8 +66,8 @@ ColumnDiff StringColumnComparator::compare(const ColumnData& lhs, const ColumnDa
     for (std::size_t i = 0; i < lhs.size(); ++i) {
         diffs.emplace_back(lhs.valueAt(i) == rhs.valueAt(i) ? "T" : "N");
     }
-    ColumnDescriptor descriptor("Str_Diff", ColumnType::String);
-    return ColumnDiff(std::move(descriptor), std::move(diffs));
+    SeriesDescriptor descriptor("Str_Diff", ValueType::String);
+    return SeriesDiff(std::move(descriptor), std::move(diffs));
 }
 
 }  // namespace diff_compare

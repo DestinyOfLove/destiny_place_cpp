@@ -6,23 +6,23 @@
 #include <string>
 #include <vector>
 
-#include "diff_compare/ColumnComparator.hpp"
-#include "diff_compare/ColumnComparatorFactory.hpp"
-#include "diff_compare/ColumnData.hpp"
-#include "diff_compare/ColumnDescriptor.hpp"
-#include "diff_compare/ColumnDiff.hpp"
 #include "diff_compare/ColumnInputProvider.hpp"
 #include "diff_compare/ColumnParser.hpp"
 #include "diff_compare/ColumnProcessingPipeline.hpp"
-#include "diff_compare/ColumnType.hpp"
 #include "diff_compare/DiffOutputWriter.hpp"
 #include "diff_compare/OutputFormatter.hpp"
+#include "diff_compare/SeriesComparator.hpp"
+#include "diff_compare/SeriesComparatorFactory.hpp"
+#include "diff_compare/SeriesData.hpp"
+#include "diff_compare/SeriesDescriptor.hpp"
+#include "diff_compare/SeriesDiff.hpp"
+#include "diff_compare/ValueType.hpp"
 
 namespace diff_compare {
 namespace {
 
-ColumnData makeColumnData(std::string name, ColumnType type, std::vector<std::string> values) {
-    return ColumnData(ColumnDescriptor(std::move(name), type), std::move(values));
+SeriesData makeSeriesData(std::string name, ValueType type, std::vector<std::string> values) {
+    return SeriesData(SeriesDescriptor(std::move(name), type), std::move(values));
 }
 
 std::vector<std::string> readFileLines(const std::string& path) {
@@ -50,57 +50,57 @@ std::string writeTempFile(const std::string& file_name, const std::string& conte
 
 }  // namespace
 
-TEST(ColumnDescriptorTest, RejectsNameTypeMismatch) {
-    EXPECT_THROW(ColumnDescriptor("Int_Invalid", ColumnType::String), std::invalid_argument);
-    EXPECT_THROW(ColumnDescriptor("Str_Invalid", ColumnType::Integer), std::invalid_argument);
+TEST(SeriesDescriptorTest, RejectsNameTypeMismatch) {
+    EXPECT_THROW(SeriesDescriptor("Int_Invalid", ValueType::String), std::invalid_argument);
+    EXPECT_THROW(SeriesDescriptor("Str_Invalid", ValueType::Integer), std::invalid_argument);
 }
 
-TEST(ColumnTypeTest, ParsesKnownPrefixes) {
-    EXPECT_EQ(ColumnType::Integer, columnTypeFromHeader("Int_Score"));
-    EXPECT_EQ(ColumnType::String, columnTypeFromHeader("Str_Name"));
+TEST(ValueTypeTest, ParsesKnownPrefixes) {
+    EXPECT_EQ(ValueType::Integer, valueTypeFromHeader("Int_Score"));
+    EXPECT_EQ(ValueType::String, valueTypeFromHeader("Str_Name"));
 }
 
-TEST(ColumnTypeTest, ThrowsOnUnsupportedPrefix) {
-    EXPECT_THROW(columnTypeFromHeader("Foo"), std::invalid_argument);
+TEST(ValueTypeTest, ThrowsOnUnsupportedPrefix) {
+    EXPECT_THROW(valueTypeFromHeader("Foo"), std::invalid_argument);
 }
 
-TEST(IntColumnComparatorTest, ComputesNumericDifferences) {
-    const ColumnData lhs = makeColumnData("Int_A", ColumnType::Integer, std::vector<std::string>{"2", "4", "6"});
-    const ColumnData rhs = makeColumnData("Int_A", ColumnType::Integer, std::vector<std::string>{"1", "1", "2"});
+TEST(NumericSeriesComparatorTest, ComputesNumericDifferences) {
+    const SeriesData lhs = makeSeriesData("Int_A", ValueType::Integer, std::vector<std::string>{"2", "4", "6"});
+    const SeriesData rhs = makeSeriesData("Int_A", ValueType::Integer, std::vector<std::string>{"1", "1", "2"});
 
-    IntColumnComparator comparator;
-    const ColumnDiff diff = comparator.compare(lhs, rhs);
+    NumericSeriesComparator comparator;
+    const SeriesDiff diff = comparator.compare(lhs, rhs);
 
     ASSERT_EQ(3u, diff.size());
     EXPECT_EQ("Int_Diff", diff.descriptor().name());
-    EXPECT_EQ(ColumnType::Integer, diff.descriptor().type());
+    EXPECT_EQ(ValueType::Integer, diff.descriptor().type());
     EXPECT_EQ("1", diff.valueAt(0));
     EXPECT_EQ("3", diff.valueAt(1));
     EXPECT_EQ("4", diff.valueAt(2));
 }
 
-TEST(IntColumnComparatorTest, RejectsTypeMismatch) {
-    const ColumnData lhs = makeColumnData("Int_A", ColumnType::Integer, std::vector<std::string>{"1"});
-    const ColumnData rhs = makeColumnData("Str_A", ColumnType::String, std::vector<std::string>{"1"});
+TEST(NumericSeriesComparatorTest, RejectsTypeMismatch) {
+    const SeriesData lhs = makeSeriesData("Int_A", ValueType::Integer, std::vector<std::string>{"1"});
+    const SeriesData rhs = makeSeriesData("Str_A", ValueType::String, std::vector<std::string>{"1"});
 
-    IntColumnComparator comparator;
+    NumericSeriesComparator comparator;
     EXPECT_THROW(comparator.compare(lhs, rhs), std::invalid_argument);
 }
 
-TEST(IntColumnComparatorTest, RejectsNameMismatch) {
-    const ColumnData lhs = makeColumnData("Int_A", ColumnType::Integer, std::vector<std::string>{"1"});
-    const ColumnData rhs = makeColumnData("Int_B", ColumnType::Integer, std::vector<std::string>{"1"});
+TEST(NumericSeriesComparatorTest, RejectsNameMismatch) {
+    const SeriesData lhs = makeSeriesData("Int_A", ValueType::Integer, std::vector<std::string>{"1"});
+    const SeriesData rhs = makeSeriesData("Int_B", ValueType::Integer, std::vector<std::string>{"1"});
 
-    IntColumnComparator comparator;
+    NumericSeriesComparator comparator;
     EXPECT_THROW(comparator.compare(lhs, rhs), std::invalid_argument);
 }
 
-TEST(StringColumnComparatorTest, MarksMatchesWithT) {
-    const ColumnData lhs = makeColumnData("Str_Name", ColumnType::String, std::vector<std::string>{"Alice", "Bob"});
-    const ColumnData rhs = makeColumnData("Str_Name", ColumnType::String, std::vector<std::string>{"Alice", "Charlie"});
+TEST(TextSeriesComparatorTest, MarksMatchesWithT) {
+    const SeriesData lhs = makeSeriesData("Str_Name", ValueType::String, std::vector<std::string>{"Alice", "Bob"});
+    const SeriesData rhs = makeSeriesData("Str_Name", ValueType::String, std::vector<std::string>{"Alice", "Charlie"});
 
-    StringColumnComparator comparator;
-    const ColumnDiff diff = comparator.compare(lhs, rhs);
+    TextSeriesComparator comparator;
+    const SeriesDiff diff = comparator.compare(lhs, rhs);
 
     EXPECT_EQ("Str_Diff", diff.descriptor().name());
     ASSERT_EQ(2u, diff.size());
@@ -112,10 +112,10 @@ TEST(SimpleColumnParserTest, TrimsWhitespaceAndSkipsEmptyLines) {
     std::istringstream input(" Str_Label \n value1 \n\n value2\r\n  \n");
 
     SimpleColumnParser parser;
-    const ColumnData data = parser.parse(input);
+    const SeriesData data = parser.parse(input);
 
     EXPECT_EQ("Str_Label", data.descriptor().name());
-    EXPECT_EQ(ColumnType::String, data.descriptor().type());
+    EXPECT_EQ(ValueType::String, data.descriptor().type());
     ASSERT_EQ(2u, data.size());
     EXPECT_EQ("value1", data.valueAt(0));
     EXPECT_EQ("value2", data.valueAt(1));
@@ -128,8 +128,8 @@ TEST(ColumnProcessingPipelineTest, RunsEndToEndForIntegerColumns) {
 
     const std::shared_ptr<const ColumnParser> parser = std::make_shared<SimpleColumnParser>();
     const std::shared_ptr<const ColumnInputProvider> input_provider = std::make_shared<TxtColumnInputProvider>(parser);
-    const std::shared_ptr<const ColumnComparatorFactory> comparator_factory
-        = std::make_shared<ColumnComparatorFactory>();
+    const std::shared_ptr<const SeriesComparatorFactory> comparator_factory
+        = std::make_shared<SeriesComparatorFactory>();
     const std::shared_ptr<const OutputFormatter> formatter = std::make_shared<PlainTextOutputFormatter>();
     const std::shared_ptr<const DiffOutputWriter> output_writer = std::make_shared<TxtDiffOutputWriter>(formatter);
 

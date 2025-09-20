@@ -4,7 +4,7 @@
 
 namespace diff_compare {
 
-std::vector<std::string> PlainTextOutputFormatter::format(const ColumnDiff& diff) const {
+std::vector<std::string> PlainTextOutputFormatter::format(const SeriesDiff& diff) const {
     std::vector<std::string> lines;
     lines.reserve(diff.size() + 1);
     lines.emplace_back(diff.descriptor().name());
