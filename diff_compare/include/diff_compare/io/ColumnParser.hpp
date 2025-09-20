@@ -1,5 +1,6 @@
 #pragma once
 
+#include <boost/utility/string_view.hpp>
 #include <istream>
 #include <memory>
 #include <string>
@@ -19,7 +20,7 @@ class SimpleColumnParser : public ColumnParser {
 public:
     SeriesData parse(std::istream& input) const override;
 
-    static std::string_view trimView(const std::string& line);
+    static boost::string_view trimView(const std::string& line);
     static std::string sanitizeLine(std::string line);
 };
 

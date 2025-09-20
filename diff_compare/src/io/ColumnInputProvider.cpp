@@ -3,9 +3,9 @@
 #include <fmt/core.h>
 
 #include <boost/pool/pool_alloc.hpp>
+#include <boost/utility/string_view.hpp>
 #include <fstream>
 #include <stdexcept>
-#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -87,7 +87,7 @@ private:
             if (!line_buffer_.empty() && line_buffer_.back() == '\r') {
                 line_buffer_.pop_back();
             }
-            const std::string_view trimmed = SimpleColumnParser::trimView(line_buffer_);
+            const boost::string_view trimmed = SimpleColumnParser::trimView(line_buffer_);
             if (trimmed.empty()) {
                 continue;
             }

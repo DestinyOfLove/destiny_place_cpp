@@ -10,3 +10,4 @@
 | ee989f5 | Diff/IntHeavy/1000000Rows | Release | 169.28 ms | 84.07 MiB/s | 602.31 | 并行比较器尚未启用，串行下结合内存池带来额外收益 |
 | e025cf9 | Diff/IntHeavy/1000000Rows | Release | 136.94 ms | 104.23 MiB/s | 1106.75 | **默认并行比较器**（自动按硬件线程拆分）+ 内存池；高线程数带来更高 RSS |
 | 6a05782 | Diff/IntHeavy/1000000Rows | Release | 136.71 ms | 103.87 MiB/s | 914.40 | **默认并行比较器** + Boost.Pool 行缓存；RSS 较上次回落 |
+| 49542b1 | Diff/IntHeavy/1000000Rows | Release | 142.49 ms | 99.95 MiB/s | 1065.85 | **默认并行比较器** + Boost.Pool + Boost.StringView；高系统负载下重测 | 
