@@ -20,9 +20,9 @@ std::map<ValueType, SeriesComparatorFactory::ComparatorBuilder>& comparatorRegis
     static std::map<ValueType, SeriesComparatorFactory::ComparatorBuilder> registry = [] {
         std::map<ValueType, SeriesComparatorFactory::ComparatorBuilder> initial;
         initial.emplace(ValueType::Integer,
-                        [] { return std::unique_ptr<SeriesComparator>(new NumericSeriesComparator()); });
+                        [] { return std::unique_ptr<SeriesComparator>(new ParallelNumericSeriesComparator()); });
         initial.emplace(ValueType::String,
-                        [] { return std::unique_ptr<SeriesComparator>(new TextSeriesComparator()); });
+                        [] { return std::unique_ptr<SeriesComparator>(new ParallelTextSeriesComparator()); });
         return initial;
     }();
     return registry;
