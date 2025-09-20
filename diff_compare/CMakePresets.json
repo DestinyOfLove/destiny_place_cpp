@@ -9,9 +9,27 @@
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
-                "CMAKE_TOOLCHAIN_FILE": "",
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}"
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "DIFF_COMPARE_ENABLE_TESTS": "ON",
+                "BUILD_TESTING": "ON"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "diff_compare",
+            "configurePreset": "diff_compare"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "diff_compare",
+            "displayName": "Run diff_compare tests",
+            "configurePreset": "diff_compare",
+            "output": {
+                "outputOnFailure": true
             }
         }
     ]
