@@ -65,6 +65,16 @@ TEST(ValueTypeTest, AllowsRegisteringAdditionalPrefixes) {
     EXPECT_EQ(ValueType::Integer, valueTypeFromHeader("IntAlt_Score"));
 }
 
+TEST(ValueTypeTest, RejectsDuplicatePrefixRegistration) {
+    registerValueType("IntDup_", ValueTraits{ValueType::Integer, "Integer"});
+    EXPECT_THROW(registerValueType("IntDup_", ValueTraits{ValueType::Integer, "Integer"}), std::invalid_argument);
+}
+
+TEST(ValueTypeTest, RejectsConflictingLabelRegistration) {
+    EXPECT_THROW(registerValueType("IntConflict_", ValueTraits{ValueType::Integer, "Different"}),
+                 std::invalid_argument);
+}
+
 TEST(ValueTypeTest, ThrowsOnUnsupportedPrefix) {
     EXPECT_THROW(valueTypeFromHeader("Foo"), std::invalid_argument);
 }
@@ -100,6 +110,37 @@ TEST(NumericSeriesComparatorTest, RejectsNameMismatch) {
     EXPECT_THROW(comparator.compare(lhs, rhs), std::invalid_argument);
 }
 
+TEST(NumericSeriesComparatorTest, RejectsNonNumericValues) {
+    const SeriesData lhs = makeSeriesData("Int_A", ValueType::Integer, std::vector<std::string>{"10", "1x", "30"});
+    const SeriesData rhs = makeSeriesData("Int_A", ValueType::Integer, std::vector<std::string>{"1", "2", "3"});
+
+    NumericSeriesComparator comparator;
+    EXPECT_THROW(comparator.compare(lhs, rhs), std::invalid_argument);
+}
+
+TEST(NumericSeriesComparatorTest, HandlesLargeInputs) {
+    constexpr std::size_t kCount = 2048;
+    std::vector<std::string> lhs_values;
+    std::vector<std::string> rhs_values;
+    lhs_values.reserve(kCount);
+    rhs_values.reserve(kCount);
+    for (std::size_t i = 0; i < kCount; ++i) {
+        lhs_values.emplace_back(std::to_string(i * 2));
+        rhs_values.emplace_back(std::to_string(i));
+    }
+
+    const SeriesData lhs = makeSeriesData("Int_Large", ValueType::Integer, lhs_values);
+    const SeriesData rhs = makeSeriesData("Int_Large", ValueType::Integer, rhs_values);
+
+    NumericSeriesComparator comparator;
+    const SeriesDiff diff = comparator.compare(lhs, rhs);
+
+    ASSERT_EQ(kCount, diff.size());
+    EXPECT_EQ("Int_Diff", diff.descriptor().name());
+    EXPECT_EQ("0", diff.valueAt(0));
+    EXPECT_EQ(std::to_string((kCount - 1)), diff.valueAt(kCount - 1));
+}
+
 TEST(TextSeriesComparatorTest, MarksMatchesWithT) {
     const SeriesData lhs = makeSeriesData("Str_Name", ValueType::String, std::vector<std::string>{"Alice", "Bob"});
     const SeriesData rhs = makeSeriesData("Str_Name", ValueType::String, std::vector<std::string>{"Alice", "Charlie"});
@@ -124,6 +165,34 @@ TEST(SimpleColumnParserTest, TrimsWhitespaceAndSkipsEmptyLines) {
     ASSERT_EQ(2u, data.size());
     EXPECT_EQ("value1", data.valueAt(0));
     EXPECT_EQ("value2", data.valueAt(1));
+}
+
+TEST(SeriesComparatorFactoryTest, AllowsOverridingRegisteredComparator) {
+    class StubTextComparator : public SeriesComparator {
+    public:
+        SeriesDiff compare(const SeriesData& lhs, const SeriesData& rhs) const override {
+            // Simple pass-through indicating stub execution.
+            return SeriesDiff(lhs.descriptor(), lhs.values());
+        }
+    };
+
+    SeriesComparatorFactory::registerComparator(
+        ValueType::String, [] { return std::unique_ptr<SeriesComparator>(new StubTextComparator()); });
+
+    const SeriesDescriptor descriptor("Str_Override", ValueType::String);
+    SeriesComparatorFactory factory;
+    std::unique_ptr<SeriesComparator> comparator = factory.create(descriptor);
+    EXPECT_NE(nullptr, dynamic_cast<StubTextComparator*>(comparator.get()));
+
+    SeriesComparatorFactory::registerComparator(
+        ValueType::String, [] { return std::unique_ptr<SeriesComparator>(new TextSeriesComparator()); });
+}
+
+TEST(ColumnInputProviderTest, RejectsEmptyFile) {
+    const std::shared_ptr<const ColumnParser> parser = std::make_shared<SimpleColumnParser>();
+    const TxtColumnInputProvider provider(parser);
+    const std::string empty_path = writeTempFile("empty_column.txt", "");
+    EXPECT_THROW(provider.readSeries(empty_path), std::invalid_argument);
 }
 
 TEST(ColumnProcessingPipelineTest, RunsEndToEndForIntegerColumns) {
