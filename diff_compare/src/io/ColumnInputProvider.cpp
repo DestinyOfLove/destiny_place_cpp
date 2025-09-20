@@ -5,6 +5,7 @@
 #include <fstream>
 #include <stdexcept>
 #include <utility>
+#include <string_view>
 
 #include "diff_compare/core/SeriesDescriptor.hpp"
 #include "diff_compare/core/ValueType.hpp"
@@ -23,12 +24,16 @@ public:
 
     bool next(std::string& value) override {
         while (std::getline(stream_, line_buffer_)) {
-            sanitized_buffer_ = SimpleColumnParser::sanitizeLine(std::move(line_buffer_));
-            if (sanitized_buffer_.empty()) {
+            if (!line_buffer_.empty() && line_buffer_.back() == '\r') {
+                line_buffer_.pop_back();
+            }
+            const std::string_view trimmed = SimpleColumnParser::trimView(line_buffer_);
+            if (trimmed.empty()) {
+                line_buffer_.clear();
                 continue;
             }
-            value.swap(sanitized_buffer_);
-            line_buffer_.swap(sanitized_buffer_);
+            value.assign(trimmed.data(), trimmed.size());
+            line_buffer_.clear();
             return true;
         }
         return false;
@@ -59,7 +64,6 @@ private:
     std::string expected_header_;
     std::ifstream stream_;
     std::string line_buffer_;
-    std::string sanitized_buffer_;
 };
 
 class TxtSeriesCursorFactory : public SeriesCursorFactory {

@@ -3,6 +3,7 @@
 #include <istream>
 #include <memory>
 #include <string>
+#include <string_view>
 
 #include "diff_compare/core/SeriesData.hpp"
 
@@ -18,6 +19,7 @@ class SimpleColumnParser : public ColumnParser {
 public:
     SeriesData parse(std::istream& input) const override;
 
+    static std::string_view trimView(const std::string& line);
     static std::string sanitizeLine(std::string line);
 };
 

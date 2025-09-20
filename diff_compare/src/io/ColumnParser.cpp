@@ -14,21 +14,27 @@
 
 namespace diff_compare {
 
+std::string_view SimpleColumnParser::trimView(const std::string& line) {
+    const char* begin = line.data();
+    const char* end = begin + line.size();
+    while (begin < end && std::isspace(static_cast<unsigned char>(*begin))) {
+        ++begin;
+    }
+    while (end > begin && std::isspace(static_cast<unsigned char>(*(end - 1)))) {
+        --end;
+    }
+    return std::string_view(begin, static_cast<std::size_t>(end - begin));
+}
+
 std::string SimpleColumnParser::sanitizeLine(std::string line) {
     if (!line.empty() && line.back() == '\r') {
         line.pop_back();
     }
-
-    auto is_space = [](unsigned char ch) { return std::isspace(ch) != 0; };
-
-    const auto first = std::find_if_not(line.begin(), line.end(), is_space);
-    const auto last = std::find_if_not(line.rbegin(), line.rend(), is_space).base();
-
-    if (first >= last) {
+    const std::string_view view = trimView(line);
+    if (view.empty()) {
         return {};
     }
-
-    return std::string(first, last);
+    return std::string(view.begin(), view.end());
 }
 
 SeriesData SimpleColumnParser::parse(std::istream& input) const {
@@ -42,11 +48,11 @@ SeriesData SimpleColumnParser::parse(std::istream& input) const {
     std::vector<std::string> values;
     std::string value;
     while (std::getline(input, value)) {
-        value = sanitizeLine(std::move(value));
-        if (value.empty()) {
+        const std::string_view view = trimView(value);
+        if (view.empty()) {
             continue;  // 忽略空行（包括仅含回车的行）
         }
-        values.emplace_back(std::move(value));
+        values.emplace_back(view.begin(), view.end());
     }
 
     return SeriesData(SeriesDescriptor(header, type), std::move(values));
