@@ -3,7 +3,7 @@ project(diff_compare LANGUAGES CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -27,7 +27,7 @@ target_include_directories(diff_compare_lib
         ${PROJECT_SOURCE_DIR}/include
 )
 
-target_compile_features(diff_compare_lib PUBLIC cxx_std_17)
+target_compile_features(diff_compare_lib PUBLIC cxx_std_11)
 
 add_executable(diff_compare
     src/main.cpp

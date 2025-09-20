@@ -10,9 +10,9 @@ namespace diff_compare {
 std::unique_ptr<ColumnComparator> ColumnComparatorFactory::create(const ColumnDescriptor& descriptor) const {
     switch (descriptor.type()) {
         case ColumnType::Integer:
-            return std::make_unique<IntColumnComparator>();
+            return std::unique_ptr<ColumnComparator>(new IntColumnComparator());
         case ColumnType::String:
-            return std::make_unique<StringColumnComparator>();
+            return std::unique_ptr<ColumnComparator>(new StringColumnComparator());
         default:
             break;
     }
