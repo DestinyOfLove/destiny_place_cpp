@@ -60,6 +60,11 @@ TEST(ValueTypeTest, ParsesKnownPrefixes) {
     EXPECT_EQ(ValueType::String, valueTypeFromHeader("Str_Name"));
 }
 
+TEST(ValueTypeTest, AllowsRegisteringAdditionalPrefixes) {
+    registerValueType("IntAlt_", ValueTraits{ValueType::Integer, "Integer"});
+    EXPECT_EQ(ValueType::Integer, valueTypeFromHeader("IntAlt_Score"));
+}
+
 TEST(ValueTypeTest, ThrowsOnUnsupportedPrefix) {
     EXPECT_THROW(valueTypeFromHeader("Foo"), std::invalid_argument);
 }
