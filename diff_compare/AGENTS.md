@@ -1,6 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
+- See `ARCHITECTURE.md` for a high-level view of the Series core and Column I/O layers.
 - `include/` exposes public headers under the `diff_compare` namespace; pair each new header with a source in `src/`.
 - `src/` contains the library and executable sources; keep module-specific helpers beside their entry points.
 - `test/` houses GoogleTest suites such as `test_diff_compare.cpp`; mirror the directory of the code under test.
