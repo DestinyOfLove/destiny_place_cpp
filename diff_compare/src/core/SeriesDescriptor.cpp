@@ -1,4 +1,4 @@
-#include "diff_compare/SeriesDescriptor.hpp"
+#include "diff_compare/core/SeriesDescriptor.hpp"
 
 #include <stdexcept>
 #include <utility>

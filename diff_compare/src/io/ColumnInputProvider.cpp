@@ -1,4 +1,4 @@
-#include "diff_compare/ColumnInputProvider.hpp"
+#include "diff_compare/io/ColumnInputProvider.hpp"
 
 #include <fstream>
 #include <stdexcept>

@@ -1,4 +1,4 @@
-#include "diff_compare/SeriesComparatorFactory.hpp"
+#include "diff_compare/core/SeriesComparatorFactory.hpp"
 
 #include <map>
 #include <memory>
@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <utility>
 
-#include "diff_compare/ValueType.hpp"
+#include "diff_compare/core/ValueType.hpp"
 
 namespace diff_compare {
 

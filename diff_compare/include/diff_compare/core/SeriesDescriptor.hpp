@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "diff_compare/ValueType.hpp"
+#include "diff_compare/core/ValueType.hpp"
 
 namespace diff_compare {
 

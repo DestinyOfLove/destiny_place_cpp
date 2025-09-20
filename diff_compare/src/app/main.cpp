@@ -1,12 +1,12 @@
 #include <memory>
 
-#include "diff_compare/ColumnDiffApp.hpp"
-#include "diff_compare/ColumnInputProvider.hpp"
-#include "diff_compare/ColumnParser.hpp"
-#include "diff_compare/ColumnProcessingPipeline.hpp"
-#include "diff_compare/DiffOutputWriter.hpp"
-#include "diff_compare/OutputFormatter.hpp"
-#include "diff_compare/SeriesComparatorFactory.hpp"
+#include "diff_compare/app/ColumnDiffApp.hpp"
+#include "diff_compare/app/ColumnProcessingPipeline.hpp"
+#include "diff_compare/core/SeriesComparatorFactory.hpp"
+#include "diff_compare/io/ColumnInputProvider.hpp"
+#include "diff_compare/io/ColumnParser.hpp"
+#include "diff_compare/io/DiffOutputWriter.hpp"
+#include "diff_compare/io/OutputFormatter.hpp"
 
 int main(int argc, char* argv[]) {
     using namespace diff_compare;

@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "diff_compare/SeriesDescriptor.hpp"
+#include "diff_compare/core/SeriesDescriptor.hpp"
 
 namespace diff_compare {
 

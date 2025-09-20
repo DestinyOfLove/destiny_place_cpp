@@ -25,10 +25,9 @@
 
 ## Naming & Organization
 - Use `Series*` for core domain classes, `ValueType` for the inferred type enum, and reserve `Column*` prefixes for I/O adapters.
-- Keep headers in `include/diff_compare/` mirrored by sources in `src/` with identical base names (e.g., `SeriesComparator.hpp` ↔ `SeriesComparator.cpp`).
-- Place executable-specific code (app entry points, CLI) under `src/` and high-level tests under `test/`, mirroring the modules they exercise.
+- Group headers under `include/diff_compare/core|io|app/` and mirror the structure in `src/core|io|app/` so each component keeps its layer-local dependencies obvious.
+- Keep executable wiring (CLI, main) in `src/app/` and high-level tests under `test/`, mirroring the modules they exercise.
 
 ## Testing Strategy
 - Unit tests in `test/test_diff_compare.cpp` demonstrate end-to-end usage through the pipeline. New components should receive suite-specific tests (`TEST(NewComparator, Scenario)`).
 - Run `cmake --preset diff_compare`, `cmake --build build`, and `ctest --preset diff_compare` to validate changes before committing.
-

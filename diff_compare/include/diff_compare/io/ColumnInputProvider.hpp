@@ -3,8 +3,8 @@
 #include <memory>
 #include <string>
 
-#include "diff_compare/ColumnParser.hpp"
-#include "diff_compare/SeriesData.hpp"
+#include "diff_compare/core/SeriesData.hpp"
+#include "diff_compare/io/ColumnParser.hpp"
 
 namespace diff_compare {
 

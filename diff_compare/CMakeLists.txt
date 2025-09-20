@@ -12,18 +12,18 @@ enable_testing()
 option(DIFF_COMPARE_ENABLE_TESTS "Build diff_compare tests" ON)
 
 add_library(diff_compare_lib
-    src/SeriesComparator.cpp
-    src/SeriesComparatorFactory.cpp
-    src/SeriesData.cpp
-    src/SeriesDescriptor.cpp
-    src/SeriesDiff.cpp
-    src/ColumnDiffApp.cpp
-    src/ColumnInputProvider.cpp
-    src/ColumnParser.cpp
-    src/ColumnProcessingPipeline.cpp
-    src/ValueType.cpp
-    src/DiffOutputWriter.cpp
-    src/OutputFormatter.cpp
+    src/app/ColumnDiffApp.cpp
+    src/app/ColumnProcessingPipeline.cpp
+    src/core/SeriesComparator.cpp
+    src/core/SeriesComparatorFactory.cpp
+    src/core/SeriesData.cpp
+    src/core/SeriesDescriptor.cpp
+    src/core/SeriesDiff.cpp
+    src/core/ValueType.cpp
+    src/io/ColumnInputProvider.cpp
+    src/io/ColumnParser.cpp
+    src/io/DiffOutputWriter.cpp
+    src/io/OutputFormatter.cpp
 )
 
 target_include_directories(diff_compare_lib
@@ -33,9 +33,7 @@ target_include_directories(diff_compare_lib
 
 target_compile_features(diff_compare_lib PUBLIC cxx_std_11)
 
-add_executable(diff_compare
-    src/main.cpp
-)
+add_executable(diff_compare src/app/main.cpp)
 
 target_link_libraries(diff_compare PRIVATE diff_compare_lib)
 

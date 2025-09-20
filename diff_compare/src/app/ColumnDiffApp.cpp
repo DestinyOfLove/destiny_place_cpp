@@ -1,4 +1,4 @@
-#include "diff_compare/ColumnDiffApp.hpp"
+#include "diff_compare/app/ColumnDiffApp.hpp"
 
 #include <exception>
 #include <iostream>

@@ -1,4 +1,4 @@
-#include "diff_compare/ColumnParser.hpp"
+#include "diff_compare/io/ColumnParser.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -7,8 +7,8 @@
 #include <utility>
 #include <vector>
 
-#include "diff_compare/SeriesDescriptor.hpp"
-#include "diff_compare/ValueType.hpp"
+#include "diff_compare/core/SeriesDescriptor.hpp"
+#include "diff_compare/core/ValueType.hpp"
 
 namespace diff_compare {
 

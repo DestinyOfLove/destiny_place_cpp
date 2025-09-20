@@ -3,8 +3,8 @@
 #include <memory>
 #include <string>
 
-#include "diff_compare/OutputFormatter.hpp"
-#include "diff_compare/SeriesDiff.hpp"
+#include "diff_compare/core/SeriesDiff.hpp"
+#include "diff_compare/io/OutputFormatter.hpp"
 
 namespace diff_compare {
 

@@ -6,17 +6,17 @@
 #include <string>
 #include <vector>
 
-#include "diff_compare/ColumnInputProvider.hpp"
-#include "diff_compare/ColumnParser.hpp"
-#include "diff_compare/ColumnProcessingPipeline.hpp"
-#include "diff_compare/DiffOutputWriter.hpp"
-#include "diff_compare/OutputFormatter.hpp"
-#include "diff_compare/SeriesComparator.hpp"
-#include "diff_compare/SeriesComparatorFactory.hpp"
-#include "diff_compare/SeriesData.hpp"
-#include "diff_compare/SeriesDescriptor.hpp"
-#include "diff_compare/SeriesDiff.hpp"
-#include "diff_compare/ValueType.hpp"
+#include "diff_compare/app/ColumnProcessingPipeline.hpp"
+#include "diff_compare/core/SeriesComparator.hpp"
+#include "diff_compare/core/SeriesComparatorFactory.hpp"
+#include "diff_compare/core/SeriesData.hpp"
+#include "diff_compare/core/SeriesDescriptor.hpp"
+#include "diff_compare/core/SeriesDiff.hpp"
+#include "diff_compare/core/ValueType.hpp"
+#include "diff_compare/io/ColumnInputProvider.hpp"
+#include "diff_compare/io/ColumnParser.hpp"
+#include "diff_compare/io/DiffOutputWriter.hpp"
+#include "diff_compare/io/OutputFormatter.hpp"
 
 namespace diff_compare {
 namespace {

@@ -3,9 +3,9 @@
 #include <memory>
 #include <string>
 
-#include "diff_compare/ColumnInputProvider.hpp"
-#include "diff_compare/DiffOutputWriter.hpp"
-#include "diff_compare/SeriesComparatorFactory.hpp"
+#include "diff_compare/core/SeriesComparatorFactory.hpp"
+#include "diff_compare/io/ColumnInputProvider.hpp"
+#include "diff_compare/io/DiffOutputWriter.hpp"
 
 namespace diff_compare {
 

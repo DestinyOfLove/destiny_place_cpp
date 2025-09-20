@@ -1,4 +1,4 @@
-#include "diff_compare/DiffOutputWriter.hpp"
+#include "diff_compare/io/DiffOutputWriter.hpp"
 
 #include <fstream>
 #include <stdexcept>

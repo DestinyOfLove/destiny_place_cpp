@@ -1,4 +1,4 @@
-#include "diff_compare/OutputFormatter.hpp"
+#include "diff_compare/io/OutputFormatter.hpp"
 
 #include <vector>
 

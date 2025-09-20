@@ -3,8 +3,8 @@
 #include <functional>
 #include <memory>
 
-#include "diff_compare/SeriesComparator.hpp"
-#include "diff_compare/SeriesDescriptor.hpp"
+#include "diff_compare/core/SeriesComparator.hpp"
+#include "diff_compare/core/SeriesDescriptor.hpp"
 
 namespace diff_compare {
 

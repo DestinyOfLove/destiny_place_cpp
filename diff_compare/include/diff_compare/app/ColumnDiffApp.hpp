@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "diff_compare/ColumnProcessingPipeline.hpp"
+#include "diff_compare/app/ColumnProcessingPipeline.hpp"
 
 namespace diff_compare {
 

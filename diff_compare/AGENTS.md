@@ -2,8 +2,7 @@
 
 ## Project Structure & Module Organization
 - See `ARCHITECTURE.md` for a high-level view of the Series core and Column I/O layers.
-- `include/` exposes public headers under the `diff_compare` namespace; pair each new header with a source in `src/`.
-- `src/` contains the library and executable sources; keep module-specific helpers beside their entry points.
+- Headers live under `include/diff_compare/{core,io,app}/` with matching implementations in `src/{core,io,app}/`; keep layer boundaries clean when adding files.
 - `test/` houses GoogleTest suites such as `test_diff_compare.cpp`; mirror the directory of the code under test.
 - Generated build trees default to `build/`; Ninja, CMake presets, and ccache outputs stay outside source folders.
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "diff_compare/SeriesData.hpp"
-#include "diff_compare/SeriesDiff.hpp"
+#include "diff_compare/core/SeriesData.hpp"
+#include "diff_compare/core/SeriesDiff.hpp"
 
 namespace diff_compare {
 
