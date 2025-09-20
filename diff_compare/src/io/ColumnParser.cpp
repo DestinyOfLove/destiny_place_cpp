@@ -1,5 +1,7 @@
 #include "diff_compare/io/ColumnParser.hpp"
 
+#include <fmt/core.h>
+
 #include <algorithm>
 #include <cctype>
 #include <stdexcept>
@@ -9,12 +11,10 @@
 
 #include "diff_compare/core/SeriesDescriptor.hpp"
 #include "diff_compare/core/ValueType.hpp"
-#include <fmt/core.h>
 
 namespace diff_compare {
 
-namespace {
-std::string sanitize_line(std::string line) {
+std::string SimpleColumnParser::sanitizeLine(std::string line) {
     if (!line.empty() && line.back() == '\r') {
         line.pop_back();
     }
@@ -30,20 +30,19 @@ std::string sanitize_line(std::string line) {
 
     return std::string(first, last);
 }
-}  // namespace
 
 SeriesData SimpleColumnParser::parse(std::istream& input) const {
     std::string header;
     if (!std::getline(input, header)) {
         throw std::invalid_argument(fmt::format("Input column missing header"));
     }
-    header = sanitize_line(std::move(header));
+    header = sanitizeLine(std::move(header));
     const ValueType type = valueTypeFromHeader(header);
 
     std::vector<std::string> values;
     std::string value;
     while (std::getline(input, value)) {
-        value = sanitize_line(std::move(value));
+        value = sanitizeLine(std::move(value));
         if (value.empty()) {
             continue;  // 忽略空行（包括仅含回车的行）
         }

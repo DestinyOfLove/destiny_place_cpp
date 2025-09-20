@@ -17,6 +17,8 @@ public:
 class SimpleColumnParser : public ColumnParser {
 public:
     SeriesData parse(std::istream& input) const override;
+
+    static std::string sanitizeLine(std::string line);
 };
 
 }  // namespace diff_compare
