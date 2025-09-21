@@ -11,4 +11,4 @@
 | e025cf9 | Diff/IntHeavy/1000000Rows | Release | 136.94 ms | 104.23 MiB/s | 1106.75 | **默认并行比较器**（自动按硬件线程拆分）+ 内存池；高线程数带来更高 RSS |
 | 6a05782 | Diff/IntHeavy/1000000Rows | Release | 136.71 ms | 103.87 MiB/s | 914.40 | **默认并行比较器** + Boost.Pool 行缓存；RSS 较上次回落 |
 | 49542b1 | Diff/IntHeavy/1000000Rows | Release | 142.49 ms | 99.95 MiB/s | 1065.85 | **默认并行比较器** + Boost.Pool + Boost.StringView；高系统负载下重测 |
-| 54bc841 | Diff/IntHeavy/1000000Rows | Release | 49.70 ms | 285.72 MiB/s | 2.90 | **默认并行比较器** + mmap 零拷贝行视图；吞吐飙升，RSS 大幅降低 |
+| e46b973 | Diff/IntHeavy/1000000Rows | Release | 49.70 ms | 285.72 MiB/s | 2.90 | **默认并行比较器** + mmap 零拷贝行视图；吞吐飙升，RSS 大幅降低 |
