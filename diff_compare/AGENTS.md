@@ -6,13 +6,14 @@
 - Headers live under `include/diff_compare/{core,io,app}/` with matching implementations in `src/{core,io,app}/`; keep layer boundaries clean when adding files.
 - `test/` houses GoogleTest suites such as `test_diff_compare.cpp`; mirror the directory of the code under test.
 - Generated build trees default to `build/`; Ninja, CMake presets, and ccache outputs stay outside source folders.
+- `TxtColumnInputProvider` 通过 `mmap` + `boost::string_view` 零拷贝读取文本列（Windows 下自动回退到流式解析）。
 
 ## Build, Test, and Development Commands
 - Configure: `cmake --preset diff_compare` (adds the vcpkg toolchain, activates testing options).
 - Rebuild quickly: `CCACHE_DISABLE=1 cmake --build build` when sandboxed ccache writes are blocked.
 - Run unit tests: `ctest --preset diff_compare` or execute `./build/diff_compare_tests` after a build.
 - Execute the CLI: `./build/diff_compare` reads column inputs and writes formatted diffs.
-- 依赖：内存池依赖 Boost.Pool，C++11 string_view 依赖 Boost.Utility；缺少时执行 `vcpkg install boost-pool boost-utility`。
+- 依赖：零拷贝解析依赖 Boost.Utility；缺少时执行 `vcpkg install boost-utility`。
 
 ## Coding Style & Naming Conventions
 - The repository pins C++11 with Google-style formatting; run `clang-format -i <files>` before committing.

@@ -3,7 +3,6 @@
 #include <fmt/core.h>
 
 #include <algorithm>
-#include <boost/utility/string_view.hpp>
 #include <cctype>
 #include <stdexcept>
 #include <string>
@@ -15,7 +14,7 @@
 
 namespace diff_compare {
 
-boost::string_view SimpleColumnParser::trimView(const std::string& line) {
+boost::string_view SimpleColumnParser::trimView(boost::string_view line) {
     const char* begin = line.data();
     const char* end = begin + line.size();
     while (begin < end && std::isspace(static_cast<unsigned char>(*begin))) {
@@ -31,7 +30,7 @@ std::string SimpleColumnParser::sanitizeLine(std::string line) {
     if (!line.empty() && line.back() == '\r') {
         line.pop_back();
     }
-    const boost::string_view view = trimView(line);
+    const boost::string_view view = trimView(boost::string_view(line));
     if (view.empty()) {
         return {};
     }
@@ -49,7 +48,7 @@ SeriesData SimpleColumnParser::parse(std::istream& input) const {
     std::vector<std::string> values;
     std::string value;
     while (std::getline(input, value)) {
-        const boost::string_view view = trimView(value);
+        const boost::string_view view = trimView(boost::string_view(value.data(), value.size()));
         if (view.empty()) {
             continue;  // 忽略空行（包括仅含回车的行）
         }

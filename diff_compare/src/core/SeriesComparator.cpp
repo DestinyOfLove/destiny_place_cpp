@@ -3,7 +3,6 @@
 #include <fmt/core.h>
 
 #include <algorithm>
-#include <cstdlib>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -26,18 +25,33 @@ void ensureDescriptorsMatch(const SeriesData& lhs, const SeriesData& rhs) {
     }
 }
 
-long long parseInteger(const std::string& value) {
-    std::size_t idx = 0;
+long long parseInteger(SeriesData::ViewType value) {
+    if (value.empty()) {
+        throw std::invalid_argument("Invalid integer value: ''");
+    }
+
+    std::size_t index = 0;
+    bool negative = false;
+    if (value[0] == '-' || value[0] == '+') {
+        negative = value[0] == '-';
+        ++index;
+        if (index == value.size()) {
+            throw std::invalid_argument(
+                fmt::format("Invalid integer value: '{}'", std::string(value.data(), value.size())));
+        }
+    }
+
     long long parsed = 0;
-    try {
-        parsed = std::stoll(value, &idx);
-    } catch (const std::exception&) {
-        throw std::invalid_argument(fmt::format("Invalid integer value: '{}'", value));
+    for (; index < value.size(); ++index) {
+        const char ch = value[index];
+        if (ch < '0' || ch > '9') {
+            throw std::invalid_argument(
+                fmt::format("Invalid integer value: '{}'", std::string(value.data(), value.size())));
+        }
+        parsed = parsed * 10 + (ch - '0');
     }
-    if (idx != value.size()) {
-        throw std::invalid_argument(fmt::format("Invalid integer value: '{}'", value));
-    }
-    return parsed;
+
+    return negative ? -parsed : parsed;
 }
 
 }  // namespace
@@ -49,36 +63,22 @@ SeriesDiff NumericSeriesComparator::compare(const SeriesData& lhs, const SeriesD
             fmt::format("NumericSeriesComparator received {} input", toString(lhs.descriptor().type())));
     }
 
-    std::unique_ptr<SeriesCursor> lhsCursor = lhs.cursor();
-    std::unique_ptr<SeriesCursor> rhsCursor = rhs.cursor();
-    if (!lhsCursor || !rhsCursor) {
-        throw std::invalid_argument("Series cursor creation failed");
+    const auto& lhsViews = lhs.views();
+    const auto& rhsViews = rhs.views();
+    if (lhsViews.size() != rhsViews.size()) {
+        throw std::invalid_argument(fmt::format(
+            "Series sizes do not match while comparing integers ({} vs {})", lhsViews.size(), rhsViews.size()));
     }
 
     std::vector<std::string> diffs;
-    const std::size_t anticipated = lhs.size();
-    if (anticipated > 0) {
-        diffs.reserve(anticipated);
+    if (!lhsViews.empty()) {
+        diffs.reserve(lhsViews.size());
     }
 
-    std::string lhsValue;
-    std::string rhsValue;
-    std::size_t processed = 0;
-    while (true) {
-        const bool lhsHas = lhsCursor->next(lhsValue);
-        const bool rhsHas = rhsCursor->next(rhsValue);
-        if (!lhsHas || !rhsHas) {
-            if (lhsHas != rhsHas) {
-                throw std::invalid_argument(
-                    fmt::format("Series sizes do not match while comparing integers (processed {} rows)", processed));
-            }
-            break;
-        }
-        const long long left = parseInteger(lhsValue);
-        const long long right = parseInteger(rhsValue);
-        const long long delta = left - right;
-        diffs.emplace_back(std::to_string(delta));
-        ++processed;
+    for (std::size_t i = 0; i < lhsViews.size(); ++i) {
+        const long long left = parseInteger(lhsViews[i]);
+        const long long right = parseInteger(rhsViews[i]);
+        diffs.emplace_back(std::to_string(left - right));
     }
 
     SeriesDescriptor descriptor("Int_Diff", ValueType::Integer);
@@ -92,33 +92,20 @@ SeriesDiff TextSeriesComparator::compare(const SeriesData& lhs, const SeriesData
             fmt::format("TextSeriesComparator received {} input", toString(lhs.descriptor().type())));
     }
 
-    std::unique_ptr<SeriesCursor> lhsCursor = lhs.cursor();
-    std::unique_ptr<SeriesCursor> rhsCursor = rhs.cursor();
-    if (!lhsCursor || !rhsCursor) {
-        throw std::invalid_argument("Series cursor creation failed");
+    const auto& lhsViews = lhs.views();
+    const auto& rhsViews = rhs.views();
+    if (lhsViews.size() != rhsViews.size()) {
+        throw std::invalid_argument(fmt::format(
+            "Series sizes do not match while comparing strings ({} vs {})", lhsViews.size(), rhsViews.size()));
     }
 
     std::vector<std::string> diffs;
-    const std::size_t anticipated = lhs.size();
-    if (anticipated > 0) {
-        diffs.reserve(anticipated);
+    if (!lhsViews.empty()) {
+        diffs.reserve(lhsViews.size());
     }
 
-    std::string lhsValue;
-    std::string rhsValue;
-    std::size_t processed = 0;
-    while (true) {
-        const bool lhsHas = lhsCursor->next(lhsValue);
-        const bool rhsHas = rhsCursor->next(rhsValue);
-        if (!lhsHas || !rhsHas) {
-            if (lhsHas != rhsHas) {
-                throw std::invalid_argument(
-                    fmt::format("Series sizes do not match while comparing strings (processed {} rows)", processed));
-            }
-            break;
-        }
-        diffs.emplace_back(lhsValue == rhsValue ? "T" : "N");
-        ++processed;
+    for (std::size_t i = 0; i < lhsViews.size(); ++i) {
+        diffs.emplace_back(lhsViews[i] == rhsViews[i] ? "T" : "N");
     }
 
     SeriesDescriptor descriptor("Str_Diff", ValueType::String);
@@ -146,8 +133,8 @@ SeriesDiff ParallelNumericSeriesComparator::compare(const SeriesData& lhs, const
             fmt::format("ParallelNumericSeriesComparator received {} input", toString(lhs.descriptor().type())));
     }
 
-    const std::vector<std::string>& lhsValues = lhs.values();
-    const std::vector<std::string>& rhsValues = rhs.values();
+    const auto& lhsValues = lhs.views();
+    const auto& rhsValues = rhs.views();
     if (lhsValues.size() != rhsValues.size()) {
         throw std::invalid_argument(
             fmt::format("Series sizes do not match: {} vs {}", lhsValues.size(), rhsValues.size()));
@@ -195,8 +182,8 @@ SeriesDiff ParallelTextSeriesComparator::compare(const SeriesData& lhs, const Se
             fmt::format("ParallelTextSeriesComparator received {} input", toString(lhs.descriptor().type())));
     }
 
-    const std::vector<std::string>& lhsValues = lhs.values();
-    const std::vector<std::string>& rhsValues = rhs.values();
+    const auto& lhsValues = lhs.views();
+    const auto& rhsValues = rhs.views();
     if (lhsValues.size() != rhsValues.size()) {
         throw std::invalid_argument(
             fmt::format("Series sizes do not match: {} vs {}", lhsValues.size(), rhsValues.size()));
