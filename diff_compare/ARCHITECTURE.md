@@ -1,13 +1,13 @@
 # Architecture Overview
 
 ## Layered Design
-- **Series Core**: Pure domain model (`SeriesDescriptor`, `SeriesData`, `SeriesDiff`) plus comparison strategies. This layer is unaware of files or "columns" and only reasons about homogeneous series of string values. Comparators implement `SeriesComparator` and return `SeriesDiff` objects.
+- **Series Core**: Domain模型包含 `SeriesDescriptor`、`SeriesData`、`SeriesDiff` 以及比较策略。`SeriesData` 既可维护懒加载的字符串视图，也会在整型列上缓存 `int64_t` 数组，比较器因此可以跳过重复的文本解析。比较策略统一实现 `SeriesComparator` 接口并生成 `SeriesDiff`。
 - **Column I/O Boundary**: Generic `SeriesInputProvider`/`SeriesOutputWriter` contracts decouple the core from transport concerns; the default text stack (`ColumnParser`, `TxtColumnInputProvider`, `TxtDiffOutputWriter`) adapts them to newline-delimited columns.
 - **Application Shell**: `ColumnProcessingPipeline` orchestrates providers, comparator factories, and writers. `ColumnDiffApp` parses CLI arguments and wires dependencies.
 
 ## Data Flow
 1. CLI receives three paths (A, B, output) and delegates to `ColumnProcessingPipeline`.
-2. A `SeriesInputProvider` reads each source; the default `TxtColumnInputProvider` uses `ColumnParser` to trim whitespace, infer `ValueType`, and emit `SeriesData`.
+2. A `SeriesInputProvider` reads each source；默认 `TxtColumnInputProvider` 通过 `mmap` 零拷贝到内存，使用 `ColumnParser` 规整首行并推断 `ValueType`，对于整数列同时写入 `int64_t` 缓冲，最终封装为 `SeriesData`。
 3. `SeriesComparatorFactory` selects a `SeriesComparator` based on `SeriesDescriptor::type()` and executes the comparison.
 4. `SeriesDiff` returns to the boundary where a `SeriesOutputWriter` (e.g., `TxtDiffOutputWriter` + `PlainTextOutputFormatter`) persists results.
 

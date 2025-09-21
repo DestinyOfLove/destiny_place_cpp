@@ -18,14 +18,14 @@ diff_compare 项目提供了 `diff_compare_perf` 可执行文件用于评估在�
 
 ## 构建
 
-在工程根目录执行：
+如未使用 CMake Preset，可在工程根目录执行：
 ```bash
 cmake --build build --target diff_compare_perf
 ```
-推荐使用 Release 构建以避免 Debug 模式干扰计时：
+项目已提供 `diff_compare_perf_release` 预设，推荐优先使用以获得 Release 结果：
 ```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release [...其他参数]
-cmake --build build --config Release --target diff_compare_perf
+cmake --preset diff_compare_perf_release
+cmake --build --preset diff_compare_perf_release
 ```
 
 ## 运行基准
@@ -41,7 +41,7 @@ cmake --build build --config Release --target diff_compare_perf
 
 示例：
 ```bash
-./build/diff_compare_perf --benchmark_filter=Diff/IntHeavy --benchmark_min_time=1s
+./build/perf_release/diff_compare_perf --benchmark_filter=Diff/IntHeavy --benchmark_min_time=1s
 ```
 
 ## 输出解读
@@ -50,7 +50,7 @@ cmake --build build --config Release --target diff_compare_perf
 - `Time`/`CPU`：真实时间与 CPU 时间（ns）。
 - `items_per_second`：每秒处理的行数。
 - `bytes_per_second`：吞吐量（以 MiB/s 表示）。
-- `PeakRSS_MB`：运行迭代过程中记录的峰值常驻内存，便于观察内存占用趋势。
+- `PeakRSS_MB`：运行迭代过程中记录的峰值常驻内存，便于观察内存占用趋势（mmap + 整数缓冲场景下通常为数 MiB 级别）。
 - `MismatchStride`：场景配置的差异频率；`Rows` 表示单次处理的行数。
 
 ### 常见警告
@@ -67,3 +67,5 @@ cmake --build build --config Release --target diff_compare_perf
 ## 与优化配合
 
 在进行懒加载、流式比较等性能优化前，建议先运行基准记录 baseline。优化后再次运行并对比 `items_per_second`、`PeakRSS_MB` 等指标，即可量化改动收益。
+
+完成新的性能测试后，请将关键指标与 `git rev-parse --short HEAD` 一并追加到 `docs/perf_iter.md`，以便后续比较。

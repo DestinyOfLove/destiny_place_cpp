@@ -6,7 +6,7 @@
 - Headers live under `include/diff_compare/{core,io,app}/` with matching implementations in `src/{core,io,app}/`; keep layer boundaries clean when adding files.
 - `test/` houses GoogleTest suites such as `test_diff_compare.cpp`; mirror the directory of the code under test.
 - Generated build trees default to `build/`; Ninja, CMake presets, and ccache outputs stay outside source folders.
-- `TxtColumnInputProvider` 通过 `mmap` + `boost::string_view` 零拷贝读取文本列（Windows 下自动回退到流式解析）。
+- `TxtColumnInputProvider` 通过 `mmap` + `boost::string_view` 零拷贝读取文本列（Windows 下自动回退到流式解析），并在整型列上立即缓存 `int64_t` 以供比较器直接使用。
 
 ## Build, Test, and Development Commands
 - Configure: `cmake --preset diff_compare` (adds the vcpkg toolchain, activates testing options).
