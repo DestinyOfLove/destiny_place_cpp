@@ -8,44 +8,43 @@ skinparam component {
   BackgroundColor<<app>> #f6f6f6
 }
 
-rectangle "CLI / ColumnDiffApp" <<app>> as cli
-component "ColumnProcessingPipeline" <<app>> as pipeline
-component "SeriesComparatorFactory" <<core>> as factory
-component "SeriesData" <<core>> as seriesData
-component "SeriesComparator\n(Numeric/Text, Parallel)" <<core>> as comparators
-component "SeriesDiff" <<core>> as seriesDiff
-component "TxtColumnInputProvider\n(mmap + int64 cache)" <<io>> as input
-component "ColumnParser" <<io>> as parser
-component "TxtDiffOutputWriter" <<io>> as writer
-component "PlainTextOutputFormatter" <<io>> as formatter
+rectangle "CLI / 列差异工具" <<app>> as cli
+component "ColumnProcessingPipeline\n（列处理管线）" <<app>> as pipeline
+component "SeriesComparatorFactory\n（比较器工厂）" <<core>> as factory
+component "SeriesData\n（序列数据）" <<core>> as seriesData
+component "SeriesComparator\n（数值/文本·可并行）" <<core>> as comparators
+component "SeriesDiff\n（差异结果）" <<core>> as seriesDiff
+component "TxtColumnInputProvider\n（mmap + int64 缓存）" <<io>> as input
+component "ColumnParser\n（列解析器）" <<io>> as parser
+component "TxtDiffOutputWriter\n（文本输出）" <<io>> as writer
+component "PlainTextOutputFormatter\n（纯文本格式化）" <<io>> as formatter
 
 cli --> pipeline
-pipeline --> input : read columns
-input --> parser : normalize header
-input --> seriesData : emit SeriesData
-pipeline --> factory : select comparator
+pipeline --> input : 读取列文件
+input --> parser : 清理/校验表头
+input --> seriesData : 构建 SeriesData
+pipeline --> factory : 选择比较器
 factory --> comparators
 comparators --> seriesDiff
 seriesDiff --> formatter
 formatter --> writer
-writer --> pipeline : write diff
+writer --> pipeline : 写入结果
 
 note right of seriesData
-  Holds lazy string views pointing into mmap pages.
-  Integer columns also cache int64 buffers
-  to avoid reparsing during comparison.
+  懒加载 string_view 指向 mmap 内存，
+  整型列同时缓存 int64 数据以避免重复解析。
 end note
 
 note bottom of comparators
-  Numeric comparators prefer cached integers,
-  falling back to string_view parsing if unavailable.
+  数值比较器优先使用整型缓存，
+  缺失时回退到 string_view 解析。
 end note
 
 legend right
-  |= Layer =| Components |
-  | App     | CLI, Pipeline |
-  | I/O     | TxtColumnInputProvider, Parser, Formatter |
-  | Core    | SeriesData, Comparators, Diff |
+  |= 层级 =| 组件 |
+  | 应用层 | CLI、ColumnProcessingPipeline |
+  | I/O 层 | TxtColumnInputProvider、Parser、Formatter |
+  | 核心层 | SeriesData、Comparators、SeriesDiff |
 endlegend
 
 @enduml

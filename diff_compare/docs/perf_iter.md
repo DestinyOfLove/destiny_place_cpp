@@ -1,6 +1,6 @@
 # 性能迭代记录
 
-| Commit | 场景 | 构建 | real_time_mean | bytes_per_second | PeakRSS_MB | 备注 |
+| 提交 | 场景 | 构建类型 | 平均耗时 | 吞吐 | 峰值 RSS | 备注 |
 | --- | --- | --- | --- | --- | --- | --- |
 | d8f1f74 | Diff/IntHeavy/1000000Rows | Release | 180.44 ms | 78.99 MiB/s | 873.48 | 串行比较器，整列一次性载入；`--benchmark_repetitions=5` 基线（2025-09-21 重测） |
 | eb23808 | Diff/IntHeavy/1000000Rows | Release | 172.86 ms | 82.40 MiB/s | 623.83 | 串行比较器 + 流式游标（逐行读取）；峰值 RSS 下降（重测） |

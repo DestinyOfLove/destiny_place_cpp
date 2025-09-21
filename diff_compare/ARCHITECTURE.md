@@ -1,46 +1,45 @@
-# Architecture Overview
+# 架构概览
 
 ```plantuml
 #!docs/architecture.puml
 ```
 
-> 生成图：`plantuml docs/architecture.puml`
+> 生成图片：`plantuml docs/architecture.puml`
 
-## Layered Design
-- **Series Core**: Domain模型包含 `SeriesDescriptor`、`SeriesData`、`SeriesDiff` 以及比较策略。`SeriesData` 既可维护懒加载的字符串视图，也会在整型列上缓存 `int64_t` 数组，比较器因此可以跳过重复的文本解析。比较策略统一实现 `SeriesComparator` 接口并生成 `SeriesDiff`。
-- **Column I/O Boundary**: Generic `SeriesInputProvider`/`SeriesOutputWriter` contracts decouple the core from transport concerns; the default text stack (`ColumnParser`, `TxtColumnInputProvider`, `TxtDiffOutputWriter`) adapts them to newline-delimited columns.
-- **Application Shell**: `ColumnProcessingPipeline` orchestrates providers, comparator factories, and writers. `ColumnDiffApp` parses CLI arguments and wires dependencies.
+## 分层说明
+- **核心层（Series Core）**：包含 `SeriesDescriptor`、`SeriesData`、`SeriesDiff` 以及比较策略。`SeriesData` 既维护懒加载的字符串视图，也缓存整型列的 `int64_t` 数组，比较器可以直接消费这些数据而无需重复解析。所有比较策略统一实现 `SeriesComparator` 并返回 `SeriesDiff`。
+- **I/O 边界层（Column I/O Boundary）**：`SeriesInputProvider`/`SeriesOutputWriter` 抽象与核心解耦，默认实现包括 `ColumnParser`、`TxtColumnInputProvider`、`TxtDiffOutputWriter`，负责适配换行分隔的列文件。
+- **应用层（Application Shell）**：`ColumnProcessingPipeline` 负责调度输入、比较与输出，`ColumnDiffApp` 解析 CLI 参数并组装依赖。
 
-## Data Flow
-1. CLI receives three paths (A, B, output) and delegates to `ColumnProcessingPipeline`.
-2. A `SeriesInputProvider` reads each source；默认 `TxtColumnInputProvider` 通过 `mmap` 零拷贝到内存，使用 `ColumnParser` 规整首行并推断 `ValueType`，对于整数列同时写入 `int64_t` 缓冲，最终封装为 `SeriesData`。
-3. `SeriesComparatorFactory` selects a `SeriesComparator` based on `SeriesDescriptor::type()` and executes the comparison.
-4. `SeriesDiff` returns to the boundary where a `SeriesOutputWriter` (e.g., `TxtDiffOutputWriter` + `PlainTextOutputFormatter`) persists results.
+## 数据流程
+1. CLI 接收列文件路径（A、B、输出），委托 `ColumnProcessingPipeline`。
+2. `TxtColumnInputProvider` 通过 `mmap` 零拷贝读取列文件，借助 `ColumnParser` 校正表头并推断 `ValueType`，若为整型列则同步生成 `int64_t` 缓冲，最终封装为 `SeriesData`。
+3. `SeriesComparatorFactory` 根据 `SeriesDescriptor::type()` 返回对应比较器。
+4. 比较器得到 `SeriesDiff`，由 `PlainTextOutputFormatter` + `TxtDiffOutputWriter` 写回磁盘。
 
-## Extension Checklist
-### Adding a New Value Type
-1. Register a prefix in `valueTypeFromHeader` and extend `toString` with the new enum value.
-2. Implement a `SeriesComparator` specialized for the type (e.g., `DateSeriesComparator`).
-3. Update `SeriesComparatorFactory::create` to build the comparator (consider refactoring to a registry when multiple custom comparators exist).
-4. Add unit tests covering parsing, comparator behavior, and pipeline integration.
+## 扩展指引
+### 新增 ValueType
+1. 在 `valueTypeFromHeader` 注册新前缀，并在 `toString` 中补充名称。
+2. 实现对应比较策略（如 `DateSeriesComparator`）。
+3. 在 `SeriesComparatorFactory` 的 `switch` 中返回该比较器。
+4. 编写解析、比较与集成测试，覆盖正常与异常路径。
 
-### Supporting Alternative Inputs/Outputs
-- Implement a new `SeriesInputProvider` (wrapping a bespoke parser or data source such as CSV/DB) that still returns `SeriesData`.
-- Provide a matching `SeriesOutputWriter` (e.g., JSON output) while reusing `SeriesDiff` and optionally sharing formatters.
-- Register the new components in a factory or wire them in an alternate `main` if the build needs multiple front ends.
+### 支持新输入/输出
+- 实现新的 `SeriesInputProvider`（可连接 CSV/数据库等数据源），返回 `SeriesData` 即可复用核心逻辑。
+- 实现新的 `SeriesOutputWriter`（例如 JSON），共享 `SeriesDiff` 与格式化器。
+- 若需要多前端，可在自定义 `main` 中重新装配依赖。
 
-## Naming & Organization
-- Use `Series*` for core domain classes, `ValueType` for the inferred type enum, and reserve `Column*` prefixes for I/O adapters.
-- Group headers under `include/diff_compare/core|io|app/` and mirror the structure in `src/core|io|app/` so each component keeps its layer-local dependencies obvious.
-- Keep executable wiring (CLI, main) in `src/app/` and high-level tests under `test/`, mirroring the modules they exercise.
+## 目录与命名
+- 核心类以 `Series*` 命名，类型枚举使用 `ValueType`，I/O 适配器使用 `Column*` 前缀。
+- 头文件位于 `include/diff_compare/{core,io,app}/`，实现位于 `src/` 同级目录；应用相关入口放在 `src/app/`，测试放在 `test/`。
 
-## Testing Strategy
-- Unit tests in `test/test_diff_compare.cpp` demonstrate end-to-end usage through the pipeline. New components should receive suite-specific tests (`TEST(NewComparator, Scenario)`).
-- Run `cmake --preset diff_compare`, `cmake --build build`, and `ctest --preset diff_compare` to validate changes before committing.
+## 测试策略
+- GoogleTest 用例集中在 `test/test_diff_compare.cpp`，新增组件需编写对应测试（`TEST(Suite, Case)`）。
+- 在提交前运行 `cmake --preset diff_compare && cmake --build build && ctest --preset diff_compare` 验证。
 
-## Key Techniques & Performance Considerations
-- **mmap 零拷贝输入**：`TxtColumnInputProvider` 将文本列直接映射到内存，配合 `boost::string_view` 避免将整列拷贝进自有缓冲，I/O 与比较阶段自然重叠。
-- **整型列的增量解码**：在 mmap 扫描阶段即尝试生成 `int64_t` 缓冲；比较器优先读取该缓冲，从而绕过重复的字符串解析。若遇到异常字符自动退化为字符串视图模式，保证兼容性。
-- **并行比较器**：`ParallelNumericSeriesComparator`/`ParallelTextSeriesComparator` 依据 `std::thread::hardware_concurrency()` 拆分工作块，同时保持串行回退路径以适配小数据集。
-- **懒加载与视图缓存**：`SeriesData` 催化出的字符串视图/整型缓冲均为懒生成，只有比较阶段真正访问时才触发；同时保留 cursor 工厂以支持未来的流式读取或网络输入。
-- **性能验证工作流**：`docs/perf_iter.md` 记录各个提交下的吞吐与峰值 RSS，配合 `docs/PERF_GUIDE.md` 中的构建/运行说明，确保每次优化都有可对比的量化数据。
+## 关键技术与性能要点
+- **mmap 零拷贝**：避免大文件重复读写，比较线程按需访问内存页，I/O 与计算自然重叠。
+- **整型列缓存**：在输入阶段解析为 `int64_t`，比较器直接做数值运算，遇到非法字符自动退回字符串模式。
+- **并行比较**：数值/文本比较器按 `hardware_concurrency` 分块，数据量小时自动回退串行路径。
+- **懒加载视图**：`SeriesData` 仅在需要时才生成字符串或视图，节省内存。
+- **性能追踪**：`docs/perf_iter.md` 记录每次优化后的耗时与 RSS，`docs/PERF_GUIDE.md` 描述基准运行方式，确保性能改动可量化评估。
