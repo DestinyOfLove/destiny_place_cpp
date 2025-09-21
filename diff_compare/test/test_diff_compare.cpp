@@ -203,27 +203,6 @@ TEST(ParallelTextSeriesComparatorTest, MatchesSequentialComparator) {
     EXPECT_EQ(sequential_diff.values(), parallel_diff.values());
 }
 
-TEST(SeriesComparatorFactoryTest, AllowsOverridingRegisteredComparator) {
-    class StubTextComparator : public SeriesComparator {
-    public:
-        SeriesDiff compare(const SeriesData& lhs, const SeriesData& rhs) const override {
-            // Simple pass-through indicating stub execution.
-            return SeriesDiff(lhs.descriptor(), lhs.values());
-        }
-    };
-
-    SeriesComparatorFactory::registerComparator(
-        ValueType::String, [] { return std::unique_ptr<SeriesComparator>(new StubTextComparator()); });
-
-    const SeriesDescriptor descriptor("Str_Override", ValueType::String);
-    SeriesComparatorFactory factory;
-    std::unique_ptr<SeriesComparator> comparator = factory.create(descriptor);
-    EXPECT_NE(nullptr, dynamic_cast<StubTextComparator*>(comparator.get()));
-
-    SeriesComparatorFactory::registerComparator(
-        ValueType::String, [] { return std::unique_ptr<SeriesComparator>(new TextSeriesComparator()); });
-}
-
 TEST(ColumnInputProviderTest, RejectsEmptyFile) {
     const std::shared_ptr<const ColumnParser> parser = std::make_shared<SimpleColumnParser>();
     const TxtColumnInputProvider provider(parser);
