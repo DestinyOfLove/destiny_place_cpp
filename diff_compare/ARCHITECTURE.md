@@ -1,5 +1,11 @@
 # Architecture Overview
 
+```plantuml
+#!docs/architecture.puml
+```
+
+> 生成图：`plantuml docs/architecture.puml`
+
 ## Layered Design
 - **Series Core**: Domain模型包含 `SeriesDescriptor`、`SeriesData`、`SeriesDiff` 以及比较策略。`SeriesData` 既可维护懒加载的字符串视图，也会在整型列上缓存 `int64_t` 数组，比较器因此可以跳过重复的文本解析。比较策略统一实现 `SeriesComparator` 接口并生成 `SeriesDiff`。
 - **Column I/O Boundary**: Generic `SeriesInputProvider`/`SeriesOutputWriter` contracts decouple the core from transport concerns; the default text stack (`ColumnParser`, `TxtColumnInputProvider`, `TxtDiffOutputWriter`) adapts them to newline-delimited columns.

@@ -1,0 +1,51 @@
+@startuml
+skinparam backgroundColor #ffffff
+skinparam componentStyle rectangle
+skinparam arrowColor #444444
+skinparam component {
+  BackgroundColor<<core>> #f0f6ff
+  BackgroundColor<<io>> #fff6ec
+  BackgroundColor<<app>> #f6f6f6
+}
+
+rectangle "CLI / ColumnDiffApp" <<app>> as cli
+component "ColumnProcessingPipeline" <<app>> as pipeline
+component "SeriesComparatorFactory" <<core>> as factory
+component "SeriesData" <<core>> as seriesData
+component "SeriesComparator\n(Numeric/Text, Parallel)" <<core>> as comparators
+component "SeriesDiff" <<core>> as seriesDiff
+component "TxtColumnInputProvider\n(mmap + int64 cache)" <<io>> as input
+component "ColumnParser" <<io>> as parser
+component "TxtDiffOutputWriter" <<io>> as writer
+component "PlainTextOutputFormatter" <<io>> as formatter
+
+cli --> pipeline
+pipeline --> input : read columns
+input --> parser : normalize header
+input --> seriesData : emit SeriesData
+pipeline --> factory : select comparator
+factory --> comparators
+comparators --> seriesDiff
+seriesDiff --> formatter
+formatter --> writer
+writer --> pipeline : write diff
+
+note right of seriesData
+  Holds lazy string views pointing into mmap pages.
+  Integer columns also cache int64 buffers
+  to avoid reparsing during comparison.
+end note
+
+note bottom of comparators
+  Numeric comparators prefer cached integers,
+  falling back to string_view parsing if unavailable.
+end note
+
+legend right
+  |= Layer =| Components |
+  | App     | CLI, Pipeline |
+  | I/O     | TxtColumnInputProvider, Parser, Formatter |
+  | Core    | SeriesData, Comparators, Diff |
+endlegend
+
+@enduml
