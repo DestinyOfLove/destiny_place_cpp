@@ -113,7 +113,7 @@ long long parseIntegerView(boost::string_view view, bool& valid) {
     return negative ? -value : value;
 }
 
-SeriesData readSeriesWithMmap(const std::string& path, const ColumnParser& parser) {
+SeriesData readSeriesWithMmap(const std::string& path) {
     auto mapped = std::make_shared<MemoryMappedFile>(path);
     const char* begin = mapped->data();
     const char* end = begin + mapped->size();
@@ -160,9 +160,9 @@ SeriesData readSeriesWithMmap(const std::string& path, const ColumnParser& parse
     SeriesDescriptor descriptor(header, type);
     std::shared_ptr<void> backing = std::static_pointer_cast<void>(mapped);
     if (type == ValueType::Integer && ints.size() == rows.size()) {
-        return SeriesData(std::move(descriptor), std::move(backing), std::move(ints));
+        return SeriesData(std::move(descriptor), std::move(rows), std::move(ints), std::move(backing));
     }
-    return SeriesData(std::move(descriptor), std::move(backing), std::move(rows));
+    return SeriesData(std::move(descriptor), std::move(rows), std::move(backing));
 }
 }  // namespace
 
@@ -174,7 +174,7 @@ TxtColumnInputProvider::TxtColumnInputProvider(std::shared_ptr<const ColumnParse
 }
 
 SeriesData TxtColumnInputProvider::readSeries(const std::string& path) const {
-    return readSeriesWithMmap(path, *parser_);
+    return readSeriesWithMmap(path);
 }
 
 }  // namespace diff_compare

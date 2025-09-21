@@ -1,6 +1,7 @@
 #pragma once
 
 #include <boost/utility/string_view.hpp>
+
 #include <cstddef>
 #include <memory>
 #include <string>
@@ -10,19 +11,6 @@
 
 namespace diff_compare {
 
-class SeriesCursor {
-public:
-    virtual ~SeriesCursor() = default;
-    virtual bool next(std::string& value) = 0;
-    virtual void reset() = 0;
-};
-
-class SeriesCursorFactory {
-public:
-    virtual ~SeriesCursorFactory() = default;
-    virtual std::unique_ptr<SeriesCursor> create() const = 0;
-};
-
 class SeriesData {
 public:
     using ViewType = boost::string_view;
@@ -30,12 +18,15 @@ public:
     SeriesData(SeriesDescriptor descriptor, std::vector<std::string> values);
 
     SeriesData(SeriesDescriptor descriptor,
-               std::shared_ptr<const SeriesCursorFactory> cursor_factory,
-               std::size_t size_hint = 0);
+               std::vector<ViewType> views,
+               std::shared_ptr<void> backing_store = nullptr);
 
-    SeriesData(SeriesDescriptor descriptor, std::shared_ptr<void> backing_store, std::vector<ViewType> views);
+    SeriesData(SeriesDescriptor descriptor,
+               std::vector<ViewType> views,
+               std::vector<long long> ints,
+               std::shared_ptr<void> backing_store = nullptr);
 
-    SeriesData(SeriesDescriptor descriptor, std::shared_ptr<void> backing_store, std::vector<long long> ints);
+    SeriesData(SeriesDescriptor descriptor, std::vector<long long> ints);
 
     const SeriesDescriptor& descriptor() const noexcept { return descriptor_; }
 
@@ -43,7 +34,7 @@ public:
 
     const std::vector<ViewType>& views() const;
 
-    const std::vector<long long>& integers() const;
+    const std::vector<long long>& integers() const noexcept { return int_values_; }
 
     bool hasIntegers() const noexcept { return !int_values_.empty(); }
 
@@ -51,25 +42,16 @@ public:
 
     const std::string& valueAt(std::size_t index) const;
 
-    std::unique_ptr<SeriesCursor> cursor() const;
-
-    bool hasCursor() const noexcept { return static_cast<bool>(cursor_factory_); }
-
 private:
     SeriesDescriptor descriptor_;
-    std::shared_ptr<const SeriesCursorFactory> cursor_factory_;
     std::shared_ptr<void> backing_store_;
 
-    mutable std::vector<std::string> materialized_values_;
+    mutable std::vector<std::string> string_values_;
     mutable std::vector<ViewType> view_values_;
     mutable std::vector<long long> int_values_;
-    mutable bool materialized_;
-    mutable bool views_valid_;
-    mutable std::size_t size_hint_;
 
-    void ensureMaterialized() const;
+    void ensureStrings() const;
     void ensureViews() const;
-    void ensureIntegers() const;
 };
 
 }  // namespace diff_compare
