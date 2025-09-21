@@ -48,6 +48,7 @@ SeriesData::SeriesData(SeriesDescriptor descriptor,
       backing_store_(),
       materialized_values_(),
       view_values_(),
+      int_values_(),
       materialized_(false),
       views_valid_(false),
       size_hint_(size_hint) {}
@@ -58,9 +59,21 @@ SeriesData::SeriesData(SeriesDescriptor descriptor, std::shared_ptr<void> backin
       backing_store_(std::move(backing_store)),
       materialized_values_(),
       view_values_(std::move(views)),
+      int_values_(),
       materialized_(false),
       views_valid_(true),
       size_hint_(view_values_.size()) {}
+
+SeriesData::SeriesData(SeriesDescriptor descriptor, std::shared_ptr<void> backing_store, std::vector<long long> ints)
+    : descriptor_(std::move(descriptor)),
+      cursor_factory_(),
+      backing_store_(std::move(backing_store)),
+      materialized_values_(),
+      view_values_(),
+      int_values_(std::move(ints)),
+      materialized_(false),
+      views_valid_(true),
+      size_hint_(int_values_.size()) {}
 
 void SeriesData::ensureMaterialized() const {
     if (materialized_) {
@@ -113,6 +126,41 @@ void SeriesData::ensureViews() const {
     views_valid_ = true;
 }
 
+void SeriesData::ensureIntegers() const {
+    if (!int_values_.empty()) {
+        return;
+    }
+
+    if (descriptor_.type() != ValueType::Integer) {
+        return;
+    }
+
+    ensureMaterialized();
+    if (materialized_values_.empty()) {
+        return;
+    }
+
+    int_values_.reserve(materialized_values_.size());
+    for (const std::string& str : materialized_values_) {
+        boost::string_view view(str);
+        long long value = 0;
+        std::size_t index = 0;
+        bool negative = false;
+        if (!view.empty() && (view[0] == '-' || view[0] == '+')) {
+            negative = view[0] == '-';
+            index = 1;
+        }
+        for (; index < view.size(); ++index) {
+            if (view[index] < '0' || view[index] > '9') {
+                int_values_.clear();
+                return;
+            }
+            value = value * 10 + (view[index] - '0');
+        }
+        int_values_.push_back(negative ? -value : value);
+    }
+}
+
 const std::vector<std::string>& SeriesData::values() const {
     ensureMaterialized();
     return materialized_values_;
@@ -126,6 +174,9 @@ const std::vector<SeriesData::ViewType>& SeriesData::views() const {
 std::size_t SeriesData::size() const noexcept {
     if (views_valid_) {
         return view_values_.size();
+    }
+    if (!int_values_.empty()) {
+        return int_values_.size();
     }
     if (materialized_) {
         return materialized_values_.size();
@@ -147,6 +198,10 @@ std::unique_ptr<SeriesCursor> SeriesData::cursor() const {
     }
     ensureMaterialized();
     return std::unique_ptr<SeriesCursor>(new VectorSeriesCursor(&materialized_values_));
+}
+
+const std::vector<long long>& SeriesData::integers() const {
+    return int_values_;
 }
 
 }  // namespace diff_compare

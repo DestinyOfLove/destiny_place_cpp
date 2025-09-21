@@ -35,11 +35,17 @@ public:
 
     SeriesData(SeriesDescriptor descriptor, std::shared_ptr<void> backing_store, std::vector<ViewType> views);
 
+    SeriesData(SeriesDescriptor descriptor, std::shared_ptr<void> backing_store, std::vector<long long> ints);
+
     const SeriesDescriptor& descriptor() const noexcept { return descriptor_; }
 
     const std::vector<std::string>& values() const;
 
     const std::vector<ViewType>& views() const;
+
+    const std::vector<long long>& integers() const;
+
+    bool hasIntegers() const noexcept { return !int_values_.empty(); }
 
     std::size_t size() const noexcept;
 
@@ -56,12 +62,14 @@ private:
 
     mutable std::vector<std::string> materialized_values_;
     mutable std::vector<ViewType> view_values_;
+    mutable std::vector<long long> int_values_;
     mutable bool materialized_;
     mutable bool views_valid_;
     mutable std::size_t size_hint_;
 
     void ensureMaterialized() const;
     void ensureViews() const;
+    void ensureIntegers() const;
 };
 
 }  // namespace diff_compare

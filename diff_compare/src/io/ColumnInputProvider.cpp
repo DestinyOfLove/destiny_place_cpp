@@ -90,8 +90,35 @@ const char* findLineEnd(const char* current, const char* end) {
     return newline ? static_cast<const char*>(newline) : end;
 }
 
+long long parseIntegerView(boost::string_view view, bool& valid) {
+    valid = false;
+    if (view.empty()) {
+        return 0;
+    }
+
+    std::size_t index = 0;
+    bool negative = false;
+    if (view[0] == '-' || view[0] == '+') {
+        negative = view[0] == '-';
+        index = 1;
+        if (index == view.size()) {
+            return 0;
+        }
+    }
+
+    long long value = 0;
+    for (; index < view.size(); ++index) {
+        const char ch = view[index];
+        if (ch < '0' || ch > '9') {
+            return 0;
+        }
+        value = value * 10 + (ch - '0');
+    }
+    valid = true;
+    return negative ? -value : value;
+}
+
 SeriesData readSeriesWithMmap(const std::string& path, const ColumnParser& parser) {
-    (void)parser;  // parser retained for signature symmetry
     auto mapped = std::make_shared<MemoryMappedFile>(path);
     const char* begin = mapped->data();
     const char* end = begin + mapped->size();
@@ -107,6 +134,7 @@ SeriesData readSeriesWithMmap(const std::string& path, const ColumnParser& parse
     const ValueType type = valueTypeFromHeader(header);
 
     std::vector<boost::string_view> rows;
+    std::vector<long long> ints;
     const char* cursor = header_end;
     if (cursor < end && *cursor == '\n') {
         ++cursor;
@@ -118,6 +146,15 @@ SeriesData readSeriesWithMmap(const std::string& path, const ColumnParser& parse
         const boost::string_view trimmed = SimpleColumnParser::trimView(raw);
         if (!trimmed.empty()) {
             rows.emplace_back(trimmed);
+            if (type == ValueType::Integer) {
+                bool ok = false;
+                long long value = parseIntegerView(trimmed, ok);
+                if (!ok) {
+                    ints.clear();
+                } else if (ints.size() == rows.size() - 1) {
+                    ints.push_back(value);
+                }
+            }
         }
         if (line_end == end) {
             break;
@@ -127,6 +164,9 @@ SeriesData readSeriesWithMmap(const std::string& path, const ColumnParser& parse
 
     SeriesDescriptor descriptor(header, type);
     std::shared_ptr<void> backing = std::static_pointer_cast<void>(mapped);
+    if (type == ValueType::Integer && ints.size() == rows.size()) {
+        return SeriesData(std::move(descriptor), std::move(backing), std::move(ints));
+    }
     return SeriesData(std::move(descriptor), std::move(backing), std::move(rows));
 }
 #endif

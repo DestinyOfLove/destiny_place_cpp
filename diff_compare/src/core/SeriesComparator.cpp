@@ -63,6 +63,23 @@ SeriesDiff NumericSeriesComparator::compare(const SeriesData& lhs, const SeriesD
             fmt::format("NumericSeriesComparator received {} input", toString(lhs.descriptor().type())));
     }
 
+    if (lhs.hasIntegers() && rhs.hasIntegers()) {
+        const auto& lhsInts = lhs.integers();
+        const auto& rhsInts = rhs.integers();
+        if (lhsInts.size() != rhsInts.size()) {
+            throw std::invalid_argument(fmt::format(
+                "Series sizes do not match while comparing integers ({} vs {})", lhsInts.size(), rhsInts.size()));
+        }
+
+        std::vector<std::string> diffs(lhsInts.size());
+        for (std::size_t i = 0; i < lhsInts.size(); ++i) {
+            diffs[i] = std::to_string(lhsInts[i] - rhsInts[i]);
+        }
+
+        SeriesDescriptor descriptor("Int_Diff", ValueType::Integer);
+        return SeriesDiff(std::move(descriptor), std::move(diffs));
+    }
+
     const auto& lhsViews = lhs.views();
     const auto& rhsViews = rhs.views();
     if (lhsViews.size() != rhsViews.size()) {
@@ -131,6 +148,47 @@ SeriesDiff ParallelNumericSeriesComparator::compare(const SeriesData& lhs, const
     if (lhs.descriptor().type() != ValueType::Integer) {
         throw std::invalid_argument(
             fmt::format("ParallelNumericSeriesComparator received {} input", toString(lhs.descriptor().type())));
+    }
+
+    if (lhs.hasIntegers() && rhs.hasIntegers()) {
+        const auto& lhsInts = lhs.integers();
+        const auto& rhsInts = rhs.integers();
+        if (lhsInts.size() != rhsInts.size()) {
+            throw std::invalid_argument(
+                fmt::format("Series sizes do not match: {} vs {}", lhsInts.size(), rhsInts.size()));
+        }
+
+        const std::size_t count = lhsInts.size();
+        const std::size_t threads = effectiveThreads(thread_count_, count);
+        if (threads <= 1 || count == 0) {
+            NumericSeriesComparator fallback;
+            return fallback.compare(lhs, rhs);
+        }
+
+        std::vector<std::string> diffs(count);
+        std::vector<std::thread> workers;
+        workers.reserve(threads);
+        const std::size_t block = (count + threads - 1) / threads;
+
+        for (std::size_t t = 0; t < threads; ++t) {
+            const std::size_t start = t * block;
+            if (start >= count) {
+                break;
+            }
+            const std::size_t end = std::min(count, start + block);
+            workers.emplace_back([start, end, &lhsInts, &rhsInts, &diffs]() {
+                for (std::size_t i = start; i < end; ++i) {
+                    diffs[i] = std::to_string(lhsInts[i] - rhsInts[i]);
+                }
+            });
+        }
+
+        for (std::thread& worker : workers) {
+            worker.join();
+        }
+
+        SeriesDescriptor descriptor("Int_Diff", ValueType::Integer);
+        return SeriesDiff(std::move(descriptor), std::move(diffs));
     }
 
     const auto& lhsValues = lhs.views();
