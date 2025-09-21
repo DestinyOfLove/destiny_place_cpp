@@ -13,3 +13,4 @@
 | 49542b1 | Diff/IntHeavy/1000000Rows | Release | 142.49 ms | 99.95 MiB/s | 1065.85 | **默认并行比较器** + Boost.Pool + Boost.StringView；高系统负载下重测 |
 | e46b973 | Diff/IntHeavy/1000000Rows | Release | 49.70 ms | 285.72 MiB/s | 2.90 | **默认并行比较器** + mmap 零拷贝行视图；吞吐飙升，RSS 大幅降低 |
 | 2839b5f | Diff/IntHeavy/1000000Rows | Release | 55.89 ms | 254.63 MiB/s | 3.96 | **并行比较器** + 整数列缓存；吞吐略降，避免重复解析 |
+| f7105d7 | Diff/IntHeavy/1000000Rows | Release | 52.94 ms | 268.20 MiB/s | 2.17 | **整数列缓存 + mmap-only**（移除 Windows 回退）；吞吐小幅回升 |

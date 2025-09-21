@@ -4,17 +4,13 @@
 
 #include <boost/utility/string_view.hpp>
 
-#ifndef _WIN32
+#include <cerrno>
+#include <cstring>
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <cerrno>
-#include <cstring>
-#endif
-
-#include <fstream>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -27,7 +23,6 @@ namespace diff_compare {
 
 namespace {
 
-#if !defined(_WIN32)
 class MemoryMappedFile {
 public:
     explicit MemoryMappedFile(std::string path) : path_(std::move(path)), fd_(-1), size_(0), data_(nullptr) {
@@ -169,16 +164,6 @@ SeriesData readSeriesWithMmap(const std::string& path, const ColumnParser& parse
     }
     return SeriesData(std::move(descriptor), std::move(backing), std::move(rows));
 }
-#endif
-
-SeriesData readSeriesWithParser(const std::string& path, const ColumnParser& parser) {
-    std::ifstream input(path.c_str());
-    if (!input.is_open()) {
-        throw std::runtime_error(fmt::format("Failed to open input file: {}", path));
-    }
-    return parser.parse(input);
-}
-
 }  // namespace
 
 TxtColumnInputProvider::TxtColumnInputProvider(std::shared_ptr<const ColumnParser> parser)
@@ -189,15 +174,7 @@ TxtColumnInputProvider::TxtColumnInputProvider(std::shared_ptr<const ColumnParse
 }
 
 SeriesData TxtColumnInputProvider::readSeries(const std::string& path) const {
-#if defined(_WIN32)
-    return readSeriesWithParser(path, *parser_);
-#else
-    try {
-        return readSeriesWithMmap(path, *parser_);
-    } catch (const std::exception&) {
-        return readSeriesWithParser(path, *parser_);
-    }
-#endif
+    return readSeriesWithMmap(path, *parser_);
 }
 
 }  // namespace diff_compare
