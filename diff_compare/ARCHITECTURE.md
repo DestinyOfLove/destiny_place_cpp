@@ -37,3 +37,10 @@
 ## Testing Strategy
 - Unit tests in `test/test_diff_compare.cpp` demonstrate end-to-end usage through the pipeline. New components should receive suite-specific tests (`TEST(NewComparator, Scenario)`).
 - Run `cmake --preset diff_compare`, `cmake --build build`, and `ctest --preset diff_compare` to validate changes before committing.
+
+## Key Techniques & Performance Considerations
+- **mmap 零拷贝输入**：`TxtColumnInputProvider` 将文本列直接映射到内存，配合 `boost::string_view` 避免将整列拷贝进自有缓冲，I/O 与比较阶段自然重叠。
+- **整型列的增量解码**：在 mmap 扫描阶段即尝试生成 `int64_t` 缓冲；比较器优先读取该缓冲，从而绕过重复的字符串解析。若遇到异常字符自动退化为字符串视图模式，保证兼容性。
+- **并行比较器**：`ParallelNumericSeriesComparator`/`ParallelTextSeriesComparator` 依据 `std::thread::hardware_concurrency()` 拆分工作块，同时保持串行回退路径以适配小数据集。
+- **懒加载与视图缓存**：`SeriesData` 催化出的字符串视图/整型缓冲均为懒生成，只有比较阶段真正访问时才触发；同时保留 cursor 工厂以支持未来的流式读取或网络输入。
+- **性能验证工作流**：`docs/perf_iter.md` 记录各个提交下的吞吐与峰值 RSS，配合 `docs/PERF_GUIDE.md` 中的构建/运行说明，确保每次优化都有可对比的量化数据。
