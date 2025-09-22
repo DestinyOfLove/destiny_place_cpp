@@ -55,7 +55,7 @@ SeriesData SimpleColumnParser::parse(std::istream& input) const {
         values.emplace_back(view.begin(), view.end());
     }
 
-    return SeriesData(SeriesDescriptor(header, type), std::move(values));
+    return SeriesData::fromStringValues(SeriesDescriptor(header, type), std::move(values));
 }
 
 }  // namespace diff_compare

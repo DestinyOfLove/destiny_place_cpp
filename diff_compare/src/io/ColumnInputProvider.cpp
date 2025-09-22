@@ -160,9 +160,10 @@ SeriesData readSeriesWithMmap(const std::string& path) {
     SeriesDescriptor descriptor(header, type);
     std::shared_ptr<void> backing = std::static_pointer_cast<void>(mapped);
     if (type == ValueType::Integer && ints.size() == rows.size()) {
-        return SeriesData(std::move(descriptor), std::move(rows), std::move(ints), std::move(backing));
+        return SeriesData::fromViewsAndInts(std::move(descriptor), std::move(rows), std::move(ints),
+                                            std::move(backing));
     }
-    return SeriesData(std::move(descriptor), std::move(rows), std::move(backing));
+    return SeriesData::fromViews(std::move(descriptor), std::move(rows), std::move(backing));
 }
 }  // namespace
 

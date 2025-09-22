@@ -22,7 +22,7 @@ namespace diff_compare {
 namespace {
 
 SeriesData makeSeriesData(std::string name, ValueType type, std::vector<std::string> values) {
-    return SeriesData(SeriesDescriptor(std::move(name), type), std::move(values));
+    return SeriesData::fromStringValues(SeriesDescriptor(std::move(name), type), std::move(values));
 }
 
 std::vector<std::string> readFileLines(const std::string& path) {

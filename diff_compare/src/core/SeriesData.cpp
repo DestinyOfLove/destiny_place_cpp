@@ -7,109 +7,73 @@
 
 namespace diff_compare {
 
-SeriesData::SeriesData(SeriesDescriptor descriptor, std::vector<std::string> values)
-    : descriptor_(std::move(descriptor)),
-      backing_store_(),
-      string_values_(std::move(values)),
-      view_values_(),
-      int_values_() {}
-
 SeriesData::SeriesData(SeriesDescriptor descriptor,
+                       std::shared_ptr<void> backing_store,
+                       std::shared_ptr<std::vector<std::string>> owned_strings,
                        std::vector<ViewType> views,
-                       std::shared_ptr<void> backing_store)
+                       std::vector<long long> integers)
     : descriptor_(std::move(descriptor)),
       backing_store_(std::move(backing_store)),
-      string_values_(),
+      owned_strings_(std::move(owned_strings)),
       view_values_(std::move(views)),
-      int_values_() {}
+      int_values_(std::move(integers)) {}
 
-SeriesData::SeriesData(SeriesDescriptor descriptor,
-                       std::vector<ViewType> views,
-                       std::vector<long long> ints,
-                       std::shared_ptr<void> backing_store)
-    : descriptor_(std::move(descriptor)),
-      backing_store_(std::move(backing_store)),
-      string_values_(),
-      view_values_(std::move(views)),
-      int_values_(std::move(ints)) {}
-
-SeriesData::SeriesData(SeriesDescriptor descriptor, std::vector<long long> ints)
-    : descriptor_(std::move(descriptor)),
-      backing_store_(),
-      string_values_(),
-      view_values_(),
-      int_values_(std::move(ints)) {}
-
-void SeriesData::ensureStrings() const {
-    if (!string_values_.empty()) {
-        return;
+SeriesData SeriesData::fromStringValues(SeriesDescriptor descriptor, std::vector<std::string> values) {
+    auto owned = std::make_shared<std::vector<std::string>>(std::move(values));
+    std::vector<ViewType> views;
+    views.reserve(owned->size());
+    for (const std::string& value : *owned) {
+        views.emplace_back(value.data(), value.size());
     }
-
-    if (!view_values_.empty()) {
-        string_values_.reserve(view_values_.size());
-        for (const ViewType& view : view_values_) {
-            string_values_.emplace_back(view.data(), view.size());
-        }
-        return;
-    }
-
-    if (!int_values_.empty()) {
-        string_values_.reserve(int_values_.size());
-        for (long long value : int_values_) {
-            string_values_.emplace_back(std::to_string(value));
-        }
-    }
+    return SeriesData(std::move(descriptor), nullptr, std::move(owned), std::move(views), {});
 }
 
-void SeriesData::ensureViews() const {
-    if (!view_values_.empty()) {
-        return;
-    }
-
-    if (!string_values_.empty()) {
-        view_values_.reserve(string_values_.size());
-        for (const std::string& value : string_values_) {
-            view_values_.emplace_back(value.data(), value.size());
-        }
-        return;
-    }
-
-    if (!int_values_.empty()) {
-        // materialize numeric strings once to expose views
-        ensureStrings();
-        view_values_.reserve(string_values_.size());
-        for (const std::string& value : string_values_) {
-            view_values_.emplace_back(value.data(), value.size());
-        }
-    }
+SeriesData SeriesData::fromViews(SeriesDescriptor descriptor,
+                                 std::vector<ViewType> views,
+                                 std::shared_ptr<void> backing_store) {
+    return SeriesData(std::move(descriptor), std::move(backing_store), nullptr, std::move(views), {});
 }
 
-const std::vector<std::string>& SeriesData::values() const {
-    ensureStrings();
-    return string_values_;
+SeriesData SeriesData::fromViewsAndInts(SeriesDescriptor descriptor,
+                                        std::vector<ViewType> views,
+                                        std::vector<long long> integers,
+                                        std::shared_ptr<void> backing_store) {
+    if (views.size() != integers.size()) {
+        throw std::invalid_argument("SeriesData::fromViewsAndInts requires views and integers of the same size");
+    }
+    return SeriesData(std::move(descriptor), std::move(backing_store), nullptr, std::move(views),
+                      std::move(integers));
 }
 
-const std::vector<SeriesData::ViewType>& SeriesData::views() const {
-    ensureViews();
-    return view_values_;
+const std::vector<long long>& SeriesData::integers() const {
+    if (int_values_.empty()) {
+        throw std::logic_error("SeriesData: integer buffer requested but not available");
+    }
+    return int_values_;
 }
 
 std::size_t SeriesData::size() const noexcept {
-    if (!int_values_.empty()) {
-        return int_values_.size();
-    }
     if (!view_values_.empty()) {
         return view_values_.size();
     }
-    return string_values_.size();
+    return int_values_.size();
 }
 
-const std::string& SeriesData::valueAt(std::size_t index) const {
-    const auto& vals = values();
-    if (index >= vals.size()) {
-        throw std::out_of_range(fmt::format("SeriesData index out of range"));
+std::string SeriesData::valueAt(std::size_t index) const {
+    if (!view_values_.empty()) {
+        if (index >= view_values_.size()) {
+            throw std::out_of_range(fmt::format("SeriesData index out of range"));
+        }
+        const auto view = view_values_[index];
+        return std::string(view.data(), view.size());
     }
-    return vals[index];
+    if (!int_values_.empty()) {
+        if (index >= int_values_.size()) {
+            throw std::out_of_range(fmt::format("SeriesData index out of range"));
+        }
+        return std::to_string(int_values_[index]);
+    }
+    throw std::out_of_range(fmt::format("SeriesData index out of range"));
 }
 
 }  // namespace diff_compare
