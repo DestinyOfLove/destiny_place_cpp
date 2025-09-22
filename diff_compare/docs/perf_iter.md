@@ -17,3 +17,4 @@
 | f976e51 | Diff/IntHeavy/1000000Rows | Release | 57.91 ms | 246.14 MiB/s | 3.10 | **SeriesData 精简** + 比较器工厂 switch 重构；吞吐小幅反弹 |
 | 6df0864 | Diff/IntHeavy/1000000Rows | Release | 52.28 ms | 271.62 MiB/s | 3.25 | **并行比较器仅保留多线程实现**；移除独立串行流程 |
 | c52d73d | Diff/IntHeavy/1000000Rows | Release | 52.49 ms | 270.52 MiB/s | 3.08 | **SeriesData 仅保留视图 + 整型缓存**；消除字符串副本 |
+| a17ee5c | Diff/IntHeavy/1000000Rows | Release | 57.94 ms | 246.71 MiB/s | 0.00 | `SeriesSpan` 统一数值视图 + `parseIntegerStrict` 复用，保证解析一致 |
