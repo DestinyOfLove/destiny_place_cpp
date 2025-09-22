@@ -1,20 +1,19 @@
 #include "diff_compare/io/ColumnInputProvider.hpp"
 
-#include <fmt/core.h>
-
-#include <boost/utility/string_view.hpp>
-
-#include <cerrno>
-#include <cstring>
 #include <fcntl.h>
+#include <fmt/core.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <boost/utility/string_view.hpp>
+#include <cerrno>
+#include <cstring>
 #include <stdexcept>
 #include <utility>
 #include <vector>
 
+#include "diff_compare/core/ParseInteger.hpp"
 #include "diff_compare/core/SeriesDescriptor.hpp"
 #include "diff_compare/core/ValueType.hpp"
 #include "diff_compare/io/ColumnParser.hpp"
@@ -85,35 +84,7 @@ const char* findLineEnd(const char* current, const char* end) {
     return newline ? static_cast<const char*>(newline) : end;
 }
 
-long long parseIntegerView(boost::string_view view, bool& valid) {
-    valid = false;
-    if (view.empty()) {
-        return 0;
-    }
-
-    std::size_t index = 0;
-    bool negative = false;
-    if (view[0] == '-' || view[0] == '+') {
-        negative = view[0] == '-';
-        index = 1;
-        if (index == view.size()) {
-            return 0;
-        }
-    }
-
-    long long value = 0;
-    for (; index < view.size(); ++index) {
-        const char ch = view[index];
-        if (ch < '0' || ch > '9') {
-            return 0;
-        }
-        value = value * 10 + (ch - '0');
-    }
-    valid = true;
-    return negative ? -value : value;
-}
-
-SeriesData readSeriesWithMmap(const std::string& path) {
+SeriesDataPtr readSeriesWithMmap(const std::string& path) {
     auto mapped = std::make_shared<MemoryMappedFile>(path);
     const char* begin = mapped->data();
     const char* end = begin + mapped->size();
@@ -141,13 +112,12 @@ SeriesData readSeriesWithMmap(const std::string& path) {
         const boost::string_view trimmed = SimpleColumnParser::trimView(raw);
         if (!trimmed.empty()) {
             rows.emplace_back(trimmed);
-            if (type == ValueType::Integer) {
-                bool ok = false;
-                long long value = parseIntegerView(trimmed, ok);
-                if (!ok) {
-                    ints.clear();
-                } else if (ints.size() == rows.size() - 1) {
+            if (type == ValueType::Integer && ints.size() == rows.size() - 1) {
+                long long value = 0;
+                if (parseIntegerStrict(trimmed, value)) {
                     ints.push_back(value);
+                } else {
+                    ints.clear();
                 }
             }
         }
@@ -158,12 +128,11 @@ SeriesData readSeriesWithMmap(const std::string& path) {
     }
 
     SeriesDescriptor descriptor(header, type);
-    std::shared_ptr<void> backing = std::static_pointer_cast<void>(mapped);
     if (type == ValueType::Integer && ints.size() == rows.size()) {
-        return SeriesData::fromViewsAndInts(std::move(descriptor), std::move(rows), std::move(ints),
-                                            std::move(backing));
+        return NumericSeriesData::fromInt64Values(std::move(descriptor), std::move(ints));
     }
-    return SeriesData::fromViews(std::move(descriptor), std::move(rows), std::move(backing));
+    std::shared_ptr<void> backing = std::static_pointer_cast<void>(mapped);
+    return StringSeriesData::fromViews(std::move(descriptor), std::move(rows), std::move(backing));
 }
 }  // namespace
 
@@ -174,7 +143,7 @@ TxtColumnInputProvider::TxtColumnInputProvider(std::shared_ptr<const ColumnParse
     }
 }
 
-SeriesData TxtColumnInputProvider::readSeries(const std::string& path) const {
+SeriesDataPtr TxtColumnInputProvider::readSeries(const std::string& path) const {
     return readSeriesWithMmap(path);
 }
 

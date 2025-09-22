@@ -9,6 +9,7 @@
 #include <utility>
 #include <vector>
 
+#include "diff_compare/core/ParseInteger.hpp"
 #include "diff_compare/core/SeriesDescriptor.hpp"
 #include "diff_compare/core/ValueType.hpp"
 
@@ -37,7 +38,7 @@ std::string SimpleColumnParser::sanitizeLine(std::string line) {
     return std::string(view.begin(), view.end());
 }
 
-SeriesData SimpleColumnParser::parse(std::istream& input) const {
+SeriesDataPtr SimpleColumnParser::parse(std::istream& input) const {
     std::string header;
     if (!std::getline(input, header)) {
         throw std::invalid_argument(fmt::format("Input column missing header"));
@@ -55,7 +56,25 @@ SeriesData SimpleColumnParser::parse(std::istream& input) const {
         values.emplace_back(view.begin(), view.end());
     }
 
-    return SeriesData::fromStringValues(SeriesDescriptor(header, type), std::move(values));
+    if (type == ValueType::Integer) {
+        std::vector<long long> ints;
+        ints.reserve(values.size());
+        bool numeric = true;
+        for (const std::string& text : values) {
+            long long parsed = 0;
+            if (!parseIntegerStrict(text, parsed)) {
+                numeric = false;
+                break;
+            }
+            ints.push_back(parsed);
+        }
+
+        if (numeric) {
+            return NumericSeriesData::fromInt64Values(SeriesDescriptor(header, type), std::move(ints));
+        }
+    }
+
+    return StringSeriesData::fromValues(SeriesDescriptor(header, type), std::move(values));
 }
 
 }  // namespace diff_compare

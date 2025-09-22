@@ -9,7 +9,7 @@ namespace diff_compare {
 class SeriesInputProvider {
 public:
     virtual ~SeriesInputProvider() = default;
-    virtual SeriesData readSeries(const std::string& location) const = 0;
+    virtual SeriesDataPtr readSeries(const std::string& location) const = 0;
 };
 
 }  // namespace diff_compare

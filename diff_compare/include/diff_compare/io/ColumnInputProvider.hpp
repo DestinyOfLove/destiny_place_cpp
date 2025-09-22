@@ -12,14 +12,14 @@ namespace diff_compare {
 class ColumnInputProvider : public SeriesInputProvider {
 public:
     virtual ~ColumnInputProvider() = default;
-    SeriesData readSeries(const std::string& path) const override = 0;
+    SeriesDataPtr readSeries(const std::string& path) const override = 0;
 };
 
 class TxtColumnInputProvider : public ColumnInputProvider {
 public:
     explicit TxtColumnInputProvider(std::shared_ptr<const ColumnParser> parser);
 
-    SeriesData readSeries(const std::string& path) const override;
+    SeriesDataPtr readSeries(const std::string& path) const override;
 
 private:
     std::shared_ptr<const ColumnParser> parser_;

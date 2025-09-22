@@ -1,9 +1,9 @@
 #include "diff_compare/app/ColumnProcessingPipeline.hpp"
 
+#include <fmt/core.h>
+
 #include <stdexcept>
 #include <utility>
-
-#include <fmt/core.h>
 
 namespace diff_compare {
 
@@ -27,11 +27,11 @@ ColumnProcessingPipeline::ColumnProcessingPipeline(std::shared_ptr<const SeriesI
 void ColumnProcessingPipeline::run(const std::string& input_a,
                                    const std::string& input_b,
                                    const std::string& output_path) const {
-    const SeriesData series_a = input_provider_->readSeries(input_a);
-    const SeriesData series_b = input_provider_->readSeries(input_b);
+    const SeriesDataPtr series_a = input_provider_->readSeries(input_a);
+    const SeriesDataPtr series_b = input_provider_->readSeries(input_b);
 
-    auto comparator = comparator_factory_->create(series_a.descriptor());
-    const SeriesDiff diff = comparator->compare(series_a, series_b);
+    auto comparator = comparator_factory_->create(series_a->descriptor());
+    const SeriesDiff diff = comparator->compare(*series_a, *series_b);
     output_writer_->writeSeries(diff, output_path);
 }
 
