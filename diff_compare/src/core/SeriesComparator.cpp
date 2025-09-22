@@ -54,21 +54,14 @@ long long parseInteger(SeriesData::ViewType value) {
     return negative ? -parsed : parsed;
 }
 
-}  // namespace
-
-SeriesDiff NumericSeriesComparator::compare(const SeriesData& lhs, const SeriesData& rhs) const {
-    ensureDescriptorsMatch(lhs, rhs);
-    if (lhs.descriptor().type() != ValueType::Integer) {
-        throw std::invalid_argument(
-            fmt::format("NumericSeriesComparator received {} input", toString(lhs.descriptor().type())));
-    }
-
+SeriesDiff compareNumericSequential(const SeriesData& lhs, const SeriesData& rhs) {
     if (lhs.hasIntegers() && rhs.hasIntegers()) {
         const auto& lhsInts = lhs.integers();
         const auto& rhsInts = rhs.integers();
         if (lhsInts.size() != rhsInts.size()) {
-            throw std::invalid_argument(fmt::format(
-                "Series sizes do not match while comparing integers ({} vs {})", lhsInts.size(), rhsInts.size()));
+            throw std::invalid_argument(
+                fmt::format("Series sizes do not match while comparing integers ({} vs {})",
+                            lhsInts.size(), rhsInts.size()));
         }
 
         std::vector<std::string> diffs(lhsInts.size());
@@ -83,8 +76,9 @@ SeriesDiff NumericSeriesComparator::compare(const SeriesData& lhs, const SeriesD
     const auto& lhsViews = lhs.views();
     const auto& rhsViews = rhs.views();
     if (lhsViews.size() != rhsViews.size()) {
-        throw std::invalid_argument(fmt::format(
-            "Series sizes do not match while comparing integers ({} vs {})", lhsViews.size(), rhsViews.size()));
+        throw std::invalid_argument(
+            fmt::format("Series sizes do not match while comparing integers ({} vs {})",
+                        lhsViews.size(), rhsViews.size()));
     }
 
     std::vector<std::string> diffs;
@@ -102,18 +96,13 @@ SeriesDiff NumericSeriesComparator::compare(const SeriesData& lhs, const SeriesD
     return SeriesDiff(std::move(descriptor), std::move(diffs));
 }
 
-SeriesDiff TextSeriesComparator::compare(const SeriesData& lhs, const SeriesData& rhs) const {
-    ensureDescriptorsMatch(lhs, rhs);
-    if (lhs.descriptor().type() != ValueType::String) {
-        throw std::invalid_argument(
-            fmt::format("TextSeriesComparator received {} input", toString(lhs.descriptor().type())));
-    }
-
+SeriesDiff compareTextSequential(const SeriesData& lhs, const SeriesData& rhs) {
     const auto& lhsViews = lhs.views();
     const auto& rhsViews = rhs.views();
     if (lhsViews.size() != rhsViews.size()) {
-        throw std::invalid_argument(fmt::format(
-            "Series sizes do not match while comparing strings ({} vs {})", lhsViews.size(), rhsViews.size()));
+        throw std::invalid_argument(
+            fmt::format("Series sizes do not match while comparing strings ({} vs {})",
+                        lhsViews.size(), rhsViews.size()));
     }
 
     std::vector<std::string> diffs;
@@ -129,12 +118,18 @@ SeriesDiff TextSeriesComparator::compare(const SeriesData& lhs, const SeriesData
     return SeriesDiff(std::move(descriptor), std::move(diffs));
 }
 
+}  // namespace
+
 namespace {
 
 std::size_t effectiveThreads(std::size_t requested, std::size_t work_items) {
     std::size_t hw = std::max<std::size_t>(1, std::thread::hardware_concurrency());
     std::size_t threads = requested == 0 ? hw : requested;
     threads = std::max<std::size_t>(1, threads);
+    constexpr std::size_t kMinParallelWorkItems = 256;
+    if (work_items < kMinParallelWorkItems) {
+        return 1;
+    }
     if (work_items == 0) {
         return 1;
     }
@@ -161,8 +156,7 @@ SeriesDiff ParallelNumericSeriesComparator::compare(const SeriesData& lhs, const
         const std::size_t count = lhsInts.size();
         const std::size_t threads = effectiveThreads(thread_count_, count);
         if (threads <= 1 || count == 0) {
-            NumericSeriesComparator fallback;
-            return fallback.compare(lhs, rhs);
+            return compareNumericSequential(lhs, rhs);
         }
 
         std::vector<std::string> diffs(count);
@@ -201,8 +195,7 @@ SeriesDiff ParallelNumericSeriesComparator::compare(const SeriesData& lhs, const
     const std::size_t count = lhsValues.size();
     const std::size_t threads = effectiveThreads(thread_count_, count);
     if (threads <= 1 || count == 0) {
-        NumericSeriesComparator fallback;
-        return fallback.compare(lhs, rhs);
+        return compareNumericSequential(lhs, rhs);
     }
 
     std::vector<std::string> diffs(count);
@@ -250,8 +243,7 @@ SeriesDiff ParallelTextSeriesComparator::compare(const SeriesData& lhs, const Se
     const std::size_t count = lhsValues.size();
     const std::size_t threads = effectiveThreads(thread_count_, count);
     if (threads <= 1 || count == 0) {
-        TextSeriesComparator fallback;
-        return fallback.compare(lhs, rhs);
+        return compareTextSequential(lhs, rhs);
     }
 
     std::vector<std::string> diffs(count);

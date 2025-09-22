@@ -6,7 +6,7 @@
 
 项目采用“核心/边界/应用”三层分离模型，详细结构见 `ARCHITECTURE.md`（包含 PlantUML 图）：
 
-- **核心层**：`SeriesDescriptor`、`SeriesData`、`SeriesComparator` 等纯业务对象。`SeriesData` 支持字符串视图与整型缓存；比较器根据 `ValueType` 选择串行或并行策略。
+- **核心层**：`SeriesDescriptor`、`SeriesData`、`SeriesComparator` 等纯业务对象。`SeriesData` 支持字符串视图与整型缓存；比较器根据 `ValueType` 选择并行策略，数据量较小时自动降为单线程。
 - **I/O 层**：`TxtColumnInputProvider` 负责通过 `mmap` 读取列文件并构建 `SeriesData`；`ColumnParser` 清洗首行并推断类型；`TxtDiffOutputWriter` 与 `PlainTextOutputFormatter` 负责输出文本结果。
 - **应用层**：`ColumnProcessingPipeline` 串联输入、比较、输出；`ColumnDiffApp` 是 CLI 入口。
 
@@ -16,14 +16,14 @@
 
 - **零拷贝读取**：使用 `mmap` 将列文件映射到用户态内存，配合 `boost::string_view` 直接引用，避免中间缓冲。
 - **整型列增量解码**：在读取阶段同时尝试把整型列解析成 `int64_t` 数组，比较器优先使用该缓存，必要时退回字符串解析。
-- **并行比较器**：根据 `hardware_concurrency` 动态拆分任务，对大规模数据能充分利用多核，数据量小时自动退回串行。
+- **并行比较器**：根据 `hardware_concurrency` 动态拆分任务，对大数据利用多核，数据量较小时自动降为单线程执行。
 - **性能追踪**：`docs/perf_iter.md` 按提交记录真实耗时、吞吐与峰值 RSS，配合 `docs/PERF_GUIDE.md` 中的运行说明，确保每次优化有可对比的量化数据。
 
 ## 可扩展性
 
 ### 新的数据类型
 1. 在 `valueTypeFromHeader` 注册新的前缀，并扩展 `ValueType` 枚举。
-2. 实现对应的 `SeriesComparator`（可选择串行/并行版本）。
+2. 实现对应的 `SeriesComparator`（默认并行实现，内部根据任务规模自适应线程数）。
 3. 在 `SeriesComparatorFactory::create` 的 `switch` 中返回该比较器。
 4. 补充解析与比较的单元测试。
 

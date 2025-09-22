@@ -79,11 +79,11 @@ TEST(ValueTypeTest, ThrowsOnUnsupportedPrefix) {
     EXPECT_THROW(valueTypeFromHeader("Foo"), std::invalid_argument);
 }
 
-TEST(NumericSeriesComparatorTest, ComputesNumericDifferences) {
+TEST(ParallelNumericSeriesComparatorTest, ComputesNumericDifferences) {
     const SeriesData lhs = makeSeriesData("Int_A", ValueType::Integer, std::vector<std::string>{"2", "4", "6"});
     const SeriesData rhs = makeSeriesData("Int_A", ValueType::Integer, std::vector<std::string>{"1", "1", "2"});
 
-    NumericSeriesComparator comparator;
+    ParallelNumericSeriesComparator comparator;
     const SeriesDiff diff = comparator.compare(lhs, rhs);
 
     ASSERT_EQ(3u, diff.size());
@@ -94,31 +94,31 @@ TEST(NumericSeriesComparatorTest, ComputesNumericDifferences) {
     EXPECT_EQ("4", diff.valueAt(2));
 }
 
-TEST(NumericSeriesComparatorTest, RejectsTypeMismatch) {
+TEST(ParallelNumericSeriesComparatorTest, RejectsTypeMismatch) {
     const SeriesData lhs = makeSeriesData("Int_A", ValueType::Integer, std::vector<std::string>{"1"});
     const SeriesData rhs = makeSeriesData("Str_A", ValueType::String, std::vector<std::string>{"1"});
 
-    NumericSeriesComparator comparator;
+    ParallelNumericSeriesComparator comparator;
     EXPECT_THROW(comparator.compare(lhs, rhs), std::invalid_argument);
 }
 
-TEST(NumericSeriesComparatorTest, RejectsNameMismatch) {
+TEST(ParallelNumericSeriesComparatorTest, RejectsNameMismatch) {
     const SeriesData lhs = makeSeriesData("Int_A", ValueType::Integer, std::vector<std::string>{"1"});
     const SeriesData rhs = makeSeriesData("Int_B", ValueType::Integer, std::vector<std::string>{"1"});
 
-    NumericSeriesComparator comparator;
+    ParallelNumericSeriesComparator comparator;
     EXPECT_THROW(comparator.compare(lhs, rhs), std::invalid_argument);
 }
 
-TEST(NumericSeriesComparatorTest, RejectsNonNumericValues) {
+TEST(ParallelNumericSeriesComparatorTest, RejectsNonNumericValues) {
     const SeriesData lhs = makeSeriesData("Int_A", ValueType::Integer, std::vector<std::string>{"10", "1x", "30"});
     const SeriesData rhs = makeSeriesData("Int_A", ValueType::Integer, std::vector<std::string>{"1", "2", "3"});
 
-    NumericSeriesComparator comparator;
+    ParallelNumericSeriesComparator comparator;
     EXPECT_THROW(comparator.compare(lhs, rhs), std::invalid_argument);
 }
 
-TEST(NumericSeriesComparatorTest, HandlesLargeInputs) {
+TEST(ParallelNumericSeriesComparatorTest, HandlesLargeInputs) {
     constexpr std::size_t kCount = 2048;
     std::vector<std::string> lhs_values;
     std::vector<std::string> rhs_values;
@@ -132,7 +132,7 @@ TEST(NumericSeriesComparatorTest, HandlesLargeInputs) {
     const SeriesData lhs = makeSeriesData("Int_Large", ValueType::Integer, lhs_values);
     const SeriesData rhs = makeSeriesData("Int_Large", ValueType::Integer, rhs_values);
 
-    NumericSeriesComparator comparator;
+    ParallelNumericSeriesComparator comparator;
     const SeriesDiff diff = comparator.compare(lhs, rhs);
 
     ASSERT_EQ(kCount, diff.size());
@@ -141,11 +141,11 @@ TEST(NumericSeriesComparatorTest, HandlesLargeInputs) {
     EXPECT_EQ(std::to_string((kCount - 1)), diff.valueAt(kCount - 1));
 }
 
-TEST(TextSeriesComparatorTest, MarksMatchesWithT) {
+TEST(ParallelTextSeriesComparatorTest, MarksMatchesWithT) {
     const SeriesData lhs = makeSeriesData("Str_Name", ValueType::String, std::vector<std::string>{"Alice", "Bob"});
     const SeriesData rhs = makeSeriesData("Str_Name", ValueType::String, std::vector<std::string>{"Alice", "Charlie"});
 
-    TextSeriesComparator comparator;
+    ParallelTextSeriesComparator comparator;
     const SeriesDiff diff = comparator.compare(lhs, rhs);
 
     EXPECT_EQ("Str_Diff", diff.descriptor().name());
@@ -167,41 +167,6 @@ TEST(SimpleColumnParserTest, TrimsWhitespaceAndSkipsEmptyLines) {
     EXPECT_EQ("value2", data.valueAt(1));
 }
 
-TEST(ParallelNumericSeriesComparatorTest, MatchesSequentialComparator) {
-    std::vector<std::string> values_a;
-    std::vector<std::string> values_b;
-    for (int i = 0; i < 1000; ++i) {
-        values_a.emplace_back(std::to_string(i * 3));
-        values_b.emplace_back(std::to_string(i * 3 - (i % 5 == 0 ? 1 : 0)));
-    }
-    const SeriesData lhs = makeSeriesData("Int_Parallel", ValueType::Integer, values_a);
-    const SeriesData rhs = makeSeriesData("Int_Parallel", ValueType::Integer, values_b);
-
-    ParallelNumericSeriesComparator parallel;
-    const SeriesDiff parallel_diff = parallel.compare(lhs, rhs);
-    NumericSeriesComparator sequential;
-    const SeriesDiff sequential_diff = sequential.compare(lhs, rhs);
-
-    EXPECT_EQ(sequential_diff.values(), parallel_diff.values());
-}
-
-TEST(ParallelTextSeriesComparatorTest, MatchesSequentialComparator) {
-    std::vector<std::string> values_a;
-    std::vector<std::string> values_b;
-    for (int i = 0; i < 512; ++i) {
-        values_a.emplace_back(i % 2 == 0 ? "even" : "odd");
-        values_b.emplace_back(i % 4 == 0 ? "other" : values_a.back());
-    }
-    const SeriesData lhs = makeSeriesData("Str_Parallel", ValueType::String, values_a);
-    const SeriesData rhs = makeSeriesData("Str_Parallel", ValueType::String, values_b);
-
-    ParallelTextSeriesComparator parallel(4);
-    const SeriesDiff parallel_diff = parallel.compare(lhs, rhs);
-    TextSeriesComparator sequential;
-    const SeriesDiff sequential_diff = sequential.compare(lhs, rhs);
-
-    EXPECT_EQ(sequential_diff.values(), parallel_diff.values());
-}
 
 TEST(ColumnInputProviderTest, RejectsEmptyFile) {
     const std::shared_ptr<const ColumnParser> parser = std::make_shared<SimpleColumnParser>();
