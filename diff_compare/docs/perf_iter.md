@@ -15,3 +15,4 @@
 | 2839b5f | Diff/IntHeavy/1000000Rows | Release | 55.89 ms | 254.63 MiB/s | 3.96 | **并行比较器** + 整数列缓存；吞吐略降，避免重复解析 |
 | f7105d7 | Diff/IntHeavy/1000000Rows | Release | 52.94 ms | 268.20 MiB/s | 2.17 | **整数列缓存 + mmap-only**（移除 Windows 回退）；吞吐小幅回升 |
 | f976e51 | Diff/IntHeavy/1000000Rows | Release | 57.91 ms | 246.14 MiB/s | 3.10 | **SeriesData 精简** + 比较器工厂 switch 重构；吞吐小幅反弹 |
+| 6df0864 | Diff/IntHeavy/1000000Rows | Release | 52.28 ms | 271.62 MiB/s | 3.25 | **并行比较器仅保留多线程实现**；移除独立串行流程 |
