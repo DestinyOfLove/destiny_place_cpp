@@ -13,7 +13,7 @@ option(DIFF_COMPARE_ENABLE_TESTS "Build diff_compare tests" ON)
 option(DIFF_COMPARE_ENABLE_PERF "Build diff_compare performance benchmarks" ON)
 
 find_package(fmt CONFIG REQUIRED)
-find_package(Boost REQUIRED)
+find_package(Boost CONFIG REQUIRED)
 if (DIFF_COMPARE_ENABLE_PERF)
     find_package(benchmark CONFIG QUIET)
 endif()
