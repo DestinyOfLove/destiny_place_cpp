@@ -59,19 +59,14 @@ SeriesDataPtr SimpleColumnParser::parse(std::istream& input) const {
     if (type == ValueType::Integer) {
         std::vector<long long> ints;
         ints.reserve(values.size());
-        bool numeric = true;
         for (const std::string& text : values) {
             long long parsed = 0;
             if (!parseIntegerStrict(text, parsed)) {
-                numeric = false;
-                break;
+                throw std::invalid_argument(fmt::format("Invalid integer value in Int_ column: '{}'", text));
             }
             ints.push_back(parsed);
         }
-
-        if (numeric) {
-            return NumericSeriesData::fromInt64Values(SeriesDescriptor(header, type), std::move(ints));
-        }
+        return NumericSeriesData::fromInt64Values(SeriesDescriptor(header, type), std::move(ints));
     }
 
     return StringSeriesData::fromValues(SeriesDescriptor(header, type), std::move(values));

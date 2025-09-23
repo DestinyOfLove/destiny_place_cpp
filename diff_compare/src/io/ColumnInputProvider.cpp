@@ -117,7 +117,8 @@ SeriesDataPtr readSeriesWithMmap(const std::string& path) {
                 if (parseIntegerStrict(trimmed, value)) {
                     ints.push_back(value);
                 } else {
-                    ints.clear();
+                    throw std::invalid_argument(fmt::format("Invalid integer value in Int_ column: '{}'", 
+                                                           std::string(trimmed.data(), trimmed.size())));
                 }
             }
         }
@@ -128,7 +129,7 @@ SeriesDataPtr readSeriesWithMmap(const std::string& path) {
     }
 
     SeriesDescriptor descriptor(header, type);
-    if (type == ValueType::Integer && ints.size() == rows.size()) {
+    if (type == ValueType::Integer) {
         return NumericSeriesData::fromInt64Values(std::move(descriptor), std::move(ints));
     }
     std::shared_ptr<void> backing = std::static_pointer_cast<void>(mapped);
